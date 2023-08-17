@@ -1,6 +1,7 @@
 package dev.rdh.imag;
 
 import dev.rdh.imag.processors.AbstractFileProcessor;
+import dev.rdh.imag.processors.image.PngFixProcessor;
 import dev.rdh.imag.processors.image.OxiPngProcessor;
 import dev.rdh.imag.processors.image.PngOutProcessor;
 import dev.rdh.imag.processors.image.ZopfliPngProcessor;
@@ -15,7 +16,7 @@ public class Main {
 	static @Percentage double maxReduction = 0.0;
 
 	public static void main(String[] args) {
-		maina("/Users/rhys/Desktop/", "2", "--debug");
+		maina("/Users/rhys/Desktop/base.png", "3", "--debug");
 	}
 
 	public static void maina(String... args) {
@@ -56,8 +57,10 @@ public class Main {
 
 		log("Processing " + filesToProcess.size() + " files " + passes + " times...");
 
+		final int finalPasses = passes + 1;
+
 		for(; passes > 0; passes--) {
-			log("Running pass " + passes + "...");
+			log("Running pass " + (finalPasses - passes) + "...");
 
 			for(File file : filesToProcess) {
 				int code = process(file);
@@ -123,10 +126,11 @@ public class Main {
 		}
 
 		long postSize = file.length();
-		double reduction = 1.0 - ((double) postSize / (double) preSize);
+		double reduction = 100.0 - ((double) postSize / (double) preSize) * 100.0;
 		maxReduction = Math.max(maxReduction, reduction);
 
-		log("Processed " + file.getName() + " (" + reduction + "% reduction)");
+		log("Processed " + file.getName());
+		log("Savings of " + (preSize - postSize) + " bytes (" + reduction + "%)");
 		return exitCode;
 	}
 
@@ -139,7 +143,8 @@ public class Main {
 				ZopfliPngProcessor.INSTANCE,
 				OxiPngProcessor.FIRST,
 				OxiPngProcessor.SECOND,
-				PngOutProcessor.INSTANCE
+				PngOutProcessor.INSTANCE,
+				PngFixProcessor.INSTANCE
 		);
 		for (AbstractFileProcessor p : processors) {
 			try {
