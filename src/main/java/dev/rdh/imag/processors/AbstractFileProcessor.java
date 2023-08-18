@@ -24,18 +24,23 @@ public abstract class AbstractFileProcessor {
 		this.command = new ArrayList<>(stringsButItsAListNow);
 	}
 
-	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType))
-			return;
+	protected void addFilesToArgList(File file) throws Exception {
 		if(front)
 			command.add(1, file.getCanonicalPath());
 		else
 			command.add(file.getCanonicalPath());
 
+		command.add("output." + fileType);
+	}
+
+	public void process(File file) throws Exception {
+		if(!file.getCanonicalPath().endsWith(fileType))
+			return;
+
 		File outputDir = new File(".workdir").getCanonicalFile();
 		outputDir.mkdir();
 
-		command.add("output." + fileType);
+		addFilesToArgList(file);
 
 		ProcessBuilder pb = new ProcessBuilder(command)
 				.directory(outputDir)

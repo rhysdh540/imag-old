@@ -14,14 +14,11 @@ public class PngOutProcessor extends AbstractFileProcessor {
 	}
 
 	@Override
-	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType))
-			return;
+	protected void addFilesToArgList(File file) throws Exception {
 		int level = 0;
 //		if(file.length() > 10000)
 //			level = 1; // use faster setting for large files
 		this.command.add("-s" + level);
-
-		super.process(file);
+		super.addFilesToArgList(file);
 	}
 }

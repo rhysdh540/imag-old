@@ -123,6 +123,7 @@ public class Main {
 
 		if(exitCode != 0) {
 			err("Error processing " + file.getName() + "!");
+			return exitCode;
 		}
 
 		long postSize = file.length();
