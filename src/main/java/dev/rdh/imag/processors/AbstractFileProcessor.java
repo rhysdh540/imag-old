@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public abstract class AbstractFileProcessor {
 
 	protected final List<String> command;
@@ -37,8 +38,8 @@ public abstract class AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		File outputDir = new File(".workdir").getCanonicalFile();
-		outputDir.mkdir();
+		File outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
+		outputDir.mkdirs();
 
 		addFilesToArgList(file);
 
@@ -55,6 +56,11 @@ public abstract class AbstractFileProcessor {
 			file.delete();
 			Path path = file.toPath();
 			Files.move(output.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
+		}
+
+		//noinspection DataFlowIssue
+		for(File f : outputDir.listFiles()) {
+			f.delete();
 		}
 
 		outputDir.delete();

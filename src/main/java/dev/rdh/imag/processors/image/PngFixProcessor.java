@@ -5,10 +5,13 @@ import dev.rdh.imag.processors.AbstractFileProcessor;
 import java.io.File;
 
 public class PngFixProcessor extends AbstractFileProcessor {
-	public static final PngFixProcessor INSTANCE = new PngFixProcessor();
 
 	private PngFixProcessor() {
 		super("png", true, "pngfix -o --strip=all -q");
+	}
+
+	public static PngFixProcessor newInstance() {
+		return new PngFixProcessor();
 	}
 
 	@Override

@@ -7,10 +7,12 @@ import java.io.File;
 @SuppressWarnings("DuplicatedCode")
 public class PngOutProcessor extends AbstractFileProcessor {
 
-	public static final PngOutProcessor INSTANCE = new PngOutProcessor();
-
 	private PngOutProcessor() {
 		super("png", true, "pngout -q -y -r -k1");
+	}
+
+	public static PngOutProcessor newInstance() {
+		return new PngOutProcessor();
 	}
 
 	@Override

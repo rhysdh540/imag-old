@@ -1,6 +1,5 @@
 package dev.rdh.imag.processors.image;
 
-import dev.rdh.imag.Main;
 import dev.rdh.imag.processors.AbstractFileProcessor;
 
 import java.io.File;
@@ -9,17 +8,19 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
 import static dev.rdh.imag.Main.err;
 
+@SuppressWarnings({"ResultOfMethodCallIgnored", "DataFlowIssue"})
 public class ZopfliPngProcessor extends AbstractFileProcessor {
-
-	public static final ZopfliPngProcessor INSTANCE = new ZopfliPngProcessor();
 
 	private ZopfliPngProcessor() {
 		super("png", false, "zopflipng --iterations=15 -y --lossy_transparent");
+	}
+
+	public static ZopfliPngProcessor newInstance() {
+		return new ZopfliPngProcessor();
 	}
 
 	@Override
@@ -27,9 +28,8 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		final char[] filters = {'0', '1', '2', '3', '4', 'm', 'e', 'p', 'b'};
 
 		CompletableFuture<?>[] asyncs = new CompletableFuture<?>[filters.length];
-		HashMap<Long, Character> ids = new HashMap<>(filters.length,1.0f);
-		File outputDir = new File(".workdir").getCanonicalFile();
-		outputDir.mkdir();
+		File outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
+		outputDir.mkdirs();
 
 		for(int i = 0; i < filters.length; i++) {
 			this.command.add(1, "--filters=" + filters[i]);
@@ -43,29 +43,9 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 			Process proc = builder.start();
 
-			synchronized(ids) {
-				ids.put(proc.pid(), filters[i]);
-			}
-
-			asyncs[i] = proc.onExit().thenAcceptAsync(p -> {
-				char id;
-				synchronized(ids) {
-					id = ids.get(p.pid());
-				}
-				if(Main.debug) {
-					synchronized (System.out) {
-						System.out.print(id);
-						System.out.flush();
-					}
-				}
-			});
+			asyncs[i] = proc.onExit();
 		}
-		for(CompletableFuture<?> cf : asyncs) cf.get();
-		if(Main.debug) {
-			synchronized (System.out) {
-				System.out.println();
-			}
-		}
+		CompletableFuture.allOf(asyncs).join();
 
 		if(outputDir.listFiles() == null) {
 			err("No output files found!");
@@ -75,6 +55,10 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		File bestResult = Arrays.stream(outputDir.listFiles())
 				.min(Comparator.comparingLong(File::length))
 				.orElse(file);
+
+		if(bestResult.length() >= file.length()) {
+			return;
+		}
 
 		Path a = file.toPath();
 		Path b = bestResult.toPath();
