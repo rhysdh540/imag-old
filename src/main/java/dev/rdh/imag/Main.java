@@ -15,6 +15,8 @@ import java.util.Objects;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Main {
 	public static boolean debug;
@@ -23,11 +25,10 @@ public class Main {
 	static @Percentage double avgReduction = 0.0;
 
 	public static void main(String[] args) {
-		main("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", 3, true);
+		run("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", 3, 32, true);
 	}
 
-	@SuppressWarnings("ConfusingMainMethod")
-	public static void main(String path, int passes, boolean debug) {
+	public static void run(String path, int passes, int maxThreads, boolean debug) {
 		Main.debug = debug;
 
 		File input = new File(path);
@@ -44,6 +45,8 @@ public class Main {
 
 		final int finalPasses = passes + 1;
 
+		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
+
 		CompletableFuture<?>[] asyncs = new CompletableFuture<?>[filesToProcess.size()];
 
 		for(; passes > 0; passes--) {
@@ -51,7 +54,7 @@ public class Main {
 
 			for(int i = 0; i < filesToProcess.size(); i++) {
 				final File f = filesToProcess.get(i);
-				asyncs[i] = CompletableFuture.runAsync(() -> process(f));
+				asyncs[i] = CompletableFuture.runAsync(() -> process(f), executor);
 			}
 
 			try {
