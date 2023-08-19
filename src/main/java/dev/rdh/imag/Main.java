@@ -1,6 +1,7 @@
 package dev.rdh.imag;
 
 import dev.rdh.imag.processors.AbstractFileProcessor;
+import dev.rdh.imag.processors.audio.OptiVorbisProcessor;
 import dev.rdh.imag.processors.image.*;
 
 import jdk.jfr.Percentage;
@@ -22,7 +23,7 @@ public class Main {
 	static @Percentage double avgReduction = 0.0;
 
 	public static void main(String[] args) {
-		main("/Users/rhys/coding/mc/Railway/common/", 3, true);
+		main("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", 3, true);
 	}
 
 	@SuppressWarnings("ConfusingMainMethod")
@@ -133,8 +134,14 @@ public class Main {
 		maxReduction = Math.max(maxReduction, reduction);
 		avgReduction += reduction;
 
-		log("Processed " + file.getName() +
-			"\nSavings of " + (preSize - postSize) + " bytes (" + reduction + "%)");
+		StringBuilder sb = new StringBuilder("Processed " + file.getName() + '\n');
+		if(reduction > 0.0) {
+			sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
+			sb.append("Savings of ").append(preSize - postSize).append(" bytes (").append(reduction).append("%)");
+		} else {
+			sb.append("File size not changed");
+		}
+		log(sb.toString());
 	}
 
 	/**
@@ -165,6 +172,11 @@ public class Main {
 	}
 
 	public static int processOgg(File file) {
+		try {
+			OptiVorbisProcessor.newInstance().process(file);
+		} catch (Exception e) {
+			return 1;
+		}
 		return 0;
 	}
 }
