@@ -1,39 +1,39 @@
 package dev.rdh.imag.processors;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.zip.GZIPInputStream;
 
-@SuppressWarnings({"ResultOfMethodCallIgnored", "DuplicatedCode"})
-public abstract class AbstractFileProcessor {
-
-	protected final List<String> command;
-	protected final String fileType;
-	final boolean front;
-
-	public AbstractFileProcessor(String fileType, boolean front, String command) {
-		this.fileType = fileType;
-		this.front = front;
-
-		String[] strings = command.split(" ");
-		List<String> stringsButItsAListNow = Arrays.asList(strings);
-
-		this.command = new ArrayList<>(stringsButItsAListNow);
+public class NbtFileProcessor extends AbstractFileProcessor {
+	private NbtFileProcessor() {
+		super("nbt", false, "zopfli --gzip --i1000 -c");
 	}
 
+	public static NbtFileProcessor newInstance() {
+		return new NbtFileProcessor();
+	}
+
+	@Override
 	protected void addFilesToArgList(File file) throws Exception {
-		if(front)
-			command.add(1, file.getCanonicalPath());
-		else
-			command.add(file.getCanonicalPath());
+		File decompressedFile = new File(".workdir" + File.separator + file.getName() + ".decompressed");
 
-		command.add("output." + fileType);
+		try (GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(file));
+			 FileOutputStream decompressedOutputStream = new FileOutputStream(decompressedFile)) {
+			byte[] buffer = new byte[4096];
+			int bytesRead;
+			while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
+				decompressedOutputStream.write(buffer, 0, bytesRead);
+			}
+		}
+
+		this.command.add(decompressedFile.getCanonicalPath());
 	}
 
+	@Override
 	public void process(File file) throws Exception {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
@@ -43,15 +43,16 @@ public abstract class AbstractFileProcessor {
 
 		addFilesToArgList(file);
 
+		File output = new File(outputDir, "output." + fileType);
+
 		ProcessBuilder pb = new ProcessBuilder(command)
 				.directory(outputDir)
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+				.redirectOutput(output);
 
 		Process proc = pb.start();
 		proc.waitFor();
 
-		File output = new File(outputDir, "output." + fileType);
 		if(output.exists() && output.length() < file.length()) {
 			file.delete();
 			Path path = file.toPath();

@@ -23,7 +23,7 @@ public class Main {
 	static @Percentage double avgReduction = 0.0;
 
 	public static void main(String[] args) {
-		run("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", 3, 32, true);
+		run("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/ponder", 3, 32, true);
 	}
 
 	public static void run(String path, int passes, int maxThreads, boolean debug) {
@@ -70,6 +70,7 @@ public class Main {
 		log("\n\nDone!");
 		log("Max reduction: " + maxReduction + "%");
 		log("Average reduction: " + avgReduction + "%");
+		System.exit(0);
 	}
 
 	public static void log(String message) {
@@ -135,7 +136,7 @@ public class Main {
 		maxReduction = Math.max(maxReduction, reduction);
 		avgReduction += reduction;
 
-		StringBuilder sb = new StringBuilder("Processed " + file.getName() + '\n');
+		StringBuilder sb = new StringBuilder("\nProcessed " + file.getName() + '\n');
 		if(reduction > 0.0) {
 			sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
 			sb.append("Savings of ").append(preSize - postSize).append(" bytes (").append(reduction).append("%)");
@@ -169,6 +170,11 @@ public class Main {
 	}
 
 	public static int processNbt(File file) {
+		try {
+			NbtFileProcessor.newInstance().process(file);
+		} catch (Exception e) {
+			return 1;
+		}
 		return 0;
 	}
 
