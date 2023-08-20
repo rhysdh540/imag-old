@@ -1,8 +1,6 @@
 package dev.rdh.imag;
 
-import dev.rdh.imag.processors.AbstractFileProcessor;
-import dev.rdh.imag.processors.audio.OptiVorbisProcessor;
-import dev.rdh.imag.processors.image.*;
+import dev.rdh.imag.processors.*;
 
 import jdk.jfr.Percentage;
 

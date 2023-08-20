@@ -1,6 +1,4 @@
-package dev.rdh.imag.processors.image;
-
-import dev.rdh.imag.processors.AbstractFileProcessor;
+package dev.rdh.imag.processors;
 
 public class OxiPngProcessor extends AbstractFileProcessor {
 

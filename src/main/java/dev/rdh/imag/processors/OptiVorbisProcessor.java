@@ -1,6 +1,4 @@
-package dev.rdh.imag.processors.audio;
-
-import dev.rdh.imag.processors.AbstractFileProcessor;
+package dev.rdh.imag.processors;
 
 public class OptiVorbisProcessor extends AbstractFileProcessor {
 

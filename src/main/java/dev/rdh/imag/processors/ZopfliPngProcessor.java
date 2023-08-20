@@ -1,6 +1,4 @@
-package dev.rdh.imag.processors.image;
-
-import dev.rdh.imag.processors.AbstractFileProcessor;
+package dev.rdh.imag.processors;
 
 import java.io.File;
 import java.nio.file.Files;
