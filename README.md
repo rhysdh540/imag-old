@@ -10,7 +10,7 @@ it just uses a couple of *other* command line tools to do the heavy lifting:
   - [OxiPNG](https://github.com/shssoichiro/oxipng)
   - [ZopfliPNG](https://github.com/google/zopfli)
   - [PNGOUT](http://advsys.net/ken/utils.htm)
-  - PNGFix
+  - PNGFix (which i *believe* is a part of [libpng](http://www.libpng.org/pub/png/libpng.html)?)
 - for `ogg` files:
   - [OptiVorbis](https://github.com/OptiVorbis/OptiVorbis)
 - for `nbt` files:
