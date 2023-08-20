@@ -21,12 +21,11 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 	protected void addFilesToArgList(File file) throws Exception {
 		File decompressedFile = new File(".workdir" + File.separator + file.getName() + ".decompressed");
 
-		try (GZIPInputStream gzipInputStream = new GZIPInputStream(new FileInputStream(file));
-			 FileOutputStream decompressedOutputStream = new FileOutputStream(decompressedFile)) {
-			byte[] buffer = new byte[4096];
+		try (var in = new GZIPInputStream(new FileInputStream(file)); var out = new FileOutputStream(decompressedFile)) {
+			var buffer = new byte[4096];
 			int bytesRead;
-			while ((bytesRead = gzipInputStream.read(buffer)) != -1) {
-				decompressedOutputStream.write(buffer, 0, bytesRead);
+			while((bytesRead = in.read(buffer)) != -1) {
+				out.write(buffer, 0, bytesRead);
 			}
 		}
 
@@ -38,14 +37,14 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		File outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
+		var outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
 		outputDir.mkdirs();
 
 		addFilesToArgList(file);
 
-		File output = new File(outputDir, "output." + fileType);
+		var output = new File(outputDir, "output." + fileType);
 
-		ProcessBuilder pb = new ProcessBuilder(command)
+		var pb = new ProcessBuilder(command)
 				.directory(outputDir)
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
 				.redirectOutput(output);
@@ -60,7 +59,7 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		}
 
 		//noinspection DataFlowIssue
-		for(File f : outputDir.listFiles()) {
+		for(var f : outputDir.listFiles()) {
 			f.delete();
 		}
 

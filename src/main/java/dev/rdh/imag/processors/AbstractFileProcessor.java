@@ -19,10 +19,9 @@ public abstract class AbstractFileProcessor {
 		this.fileType = fileType;
 		this.front = front;
 
-		String[] strings = command.split(" ");
-		List<String> stringsButItsAListNow = Arrays.asList(strings);
+		var strings = command.split(" ");
 
-		this.command = new ArrayList<>(stringsButItsAListNow);
+		this.command = new ArrayList<>(Arrays.asList(strings));
 	}
 
 	protected void addFilesToArgList(File file) throws Exception {
@@ -38,20 +37,19 @@ public abstract class AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		File outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
+		var outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
 		outputDir.mkdirs();
 
 		addFilesToArgList(file);
 
-		ProcessBuilder pb = new ProcessBuilder(command)
+		var pb = new ProcessBuilder(command)
 				.directory(outputDir)
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
 				.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
-		Process proc = pb.start();
-		proc.waitFor();
+		pb.start().waitFor();
 
-		File output = new File(outputDir, "output." + fileType);
+		var output = new File(outputDir, "output." + fileType);
 		if(output.exists() && output.length() < file.length()) {
 			file.delete();
 			Path path = file.toPath();

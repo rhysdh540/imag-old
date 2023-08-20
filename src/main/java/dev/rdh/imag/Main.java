@@ -29,63 +29,57 @@ public class Main {
 		nbt = true,
 		ogg = true;
 
-	static boolean debug = true;
+	static {
+		main("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/block/bogeys/narrow", "-p=1");
+		System.exit(0);
+	}
 
-	public static void main(String[] args) {
-		String path;
-		int passes;
-		int maxThreads;
+	public static void main(String... args) {
 
-		if(!debug) {
-			if (args.length < 1) {
-				err("No input specified! Use --help or -h for usage.");
-				return;
-			}
+		if(args.length < 1) {
+			err("No input specified! Use --help or -h for usage.");
+			return;
+		}
 
-			if (args[0].startsWith("--help") || args[0].startsWith("-h")) {
-				log("""
-						Usage: imag <input> [options]
-						Options:
-						  --disable=<filetypes>       Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
-						  -p, --passes=<passes>       The number of times to run the processors. Default is 3.
-						  -t, --maxthreads=<threads>  The maximum number of threads to use. Default is half of the number of available processors.
-						  -h, --help                  Display this help message.
-						""");
-				return;
-			}
+		if(args[0].startsWith("--help") || args[0].startsWith("-h")) {
+			log("""
+					Usage: \033[4mimag <input> [options]\033[0m
+					Options:
+					  --disable=<filetypes>        Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
+					  -p, --passes=<passes>        The number of times to run the processors. Default is 3.
+					  -t, --maxthreads=<threads>   The maximum number of threads to use. Default is half of the number of available processors.
+					  -h, --help                   Display this help message.
+					""");
+			return;
+		}
 
-			path = args[0];
-			passes = 3;
-			maxThreads = Runtime.getRuntime().availableProcessors() / 2;
+		var path = args[0];
+		var passes = 3;
+		var maxThreads = Runtime.getRuntime().availableProcessors() / 2;
 
-			args = Arrays.copyOfRange(args, 1, args.length);
+		args = Arrays.copyOfRange(args, 1, args.length);
 
-			for (String arg : args) {
-				String value = arg.substring(arg.indexOf('='));
-				if (arg.startsWith("--disable")) {
-					String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
-					for (String part : parts) {
-						switch (part) {
-							case "png" -> png = false;
-							case "nbt" -> nbt = false;
-							case "ogg" -> ogg = false;
-							default -> err("Unknown file type: " + part);
-						}
-					}
-				} else {
-					if (arg.startsWith("--passes") || arg.startsWith("-p")) {
-						passes = Integer.parseInt(value);
-					} else if (arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
-						maxThreads = Integer.parseInt(value);
-					} else {
-						err("Unknown argument: " + arg);
+		for(var arg : args) {
+			var value = arg.substring(arg.indexOf('='));
+			if(arg.startsWith("--disable")) {
+				String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
+				for(var part : parts) {
+					switch(part) {
+						case "png" -> png = false;
+						case "nbt" -> nbt = false;
+						case "ogg" -> ogg = false;
+						default -> err("Unknown file type: " + part);
 					}
 				}
+			} else {
+				if(arg.startsWith("--passes") || arg.startsWith("-p")) {
+					passes = Integer.parseInt(value);
+				} else if(arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
+					maxThreads = Integer.parseInt(value);
+				} else {
+					err("Unknown argument: " + arg);
+				}
 			}
-		} else {
-			path = "/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/block/bogeys/narrow";
-			passes = 1;
-			maxThreads = 8;
 		}
 
 		run(path, passes, maxThreads);
@@ -99,13 +93,13 @@ public class Main {
 	 */
 	public static void run(String path, int passes, int maxThreads) {
 
-		File input = new File(path);
+		var input = new File(path);
 
 		if(!input.exists()) {
 			err("Specified input does not exist!");
 		}
 
-		List<File> filesToProcess = input.isDirectory() ?
+		var filesToProcess = input.isDirectory() ?
 				getFiles(input)
 				: List.of(input);
 
@@ -122,8 +116,8 @@ public class Main {
 
 		final int finalPasses = passes + 1;
 
-		ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
-		CompletableFuture<?>[] asyncs = new CompletableFuture<?>[filesToProcess.size()];
+		var executor = Executors.newFixedThreadPool(maxThreads);
+		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
 
 		for(; passes > 0; passes--) {
 			log("\nRunning pass " + (finalPasses - passes) + "...");
@@ -135,7 +129,7 @@ public class Main {
 
 			try {
 				CompletableFuture.allOf(asyncs).join();
-			} catch (CompletionException e) {
+			} catch(CompletionException e) {
 				err(e.getMessage());
 			}
 		}
@@ -143,7 +137,7 @@ public class Main {
 		try {
 			//noinspection ResultOfMethodCallIgnored
 			new File(".workdir").getCanonicalFile().delete();
-		} catch (Exception ignored) {}
+		} catch(Exception ignored) {}
 
 		long postSize = filesToProcess.stream()
 				.mapToLong(File::length)
@@ -171,9 +165,9 @@ public class Main {
 
 		long preSize = file.length();
 
-		String name = file.getName().toLowerCase();
+		var name = file.getName().toLowerCase();
 
-		int exitCode = switch (name.substring(name.lastIndexOf('.'))) {
+		int exitCode = switch(name.substring(name.lastIndexOf('.'))) {
 			case ".png" -> processImage(file);
 			case ".nbt" -> processNbt(file);
 			case ".ogg" -> processOgg(file);
@@ -194,7 +188,7 @@ public class Main {
 		maxReduction = Math.max(maxReduction, reduction);
 		maxReductionSize = Math.max(maxReductionSize, preSize - postSize);
 
-		StringBuilder sb = new StringBuilder("\nProcessed " + file.getName() + '\n');
+		var sb = new StringBuilder("\nProcessed " + file.getName() + '\n');
 
 		if(reduction > 0.0) {
 			sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
@@ -211,7 +205,7 @@ public class Main {
 	 * @return the exit code of the process.
 	 */
 	public static int processImage(File file) {
-		List<AbstractFileProcessor> processors = Arrays.asList(
+		var processors = Arrays.asList(
 				ZopfliPngProcessor.newInstance(),
 				OxiPngProcessor.newFirstInstance(),
 				OxiPngProcessor.newSecondInstance(),
@@ -219,10 +213,10 @@ public class Main {
 				PngFixProcessor.newInstance()
 		);
 
-		for (var p : processors) {
+		for(var p : processors) {
 			try {
 				p.process(file);
-			} catch (Exception e) {
+			} catch(Exception e) {
 				return 1;
 			}
 		}
@@ -237,7 +231,7 @@ public class Main {
 	public static int processNbt(File file) {
 		try {
 			NbtFileProcessor.newInstance().process(file);
-		} catch (Exception e) {
+		} catch(Exception e) {
 			return 1;
 		}
 		return 0;
@@ -251,7 +245,7 @@ public class Main {
 	public static int processOgg(File file) {
 		try {
 			OptiVorbisProcessor.newInstance().process(file);
-		} catch (Exception e) {
+		} catch(Exception e) {
 			return 1;
 		}
 		return 0;
@@ -271,7 +265,7 @@ public class Main {
 	 * @param message the message to log.
 	 */
 	public static void log(String message) {
-		synchronized (System.out) {
+		synchronized(System.out) {
 			System.out.println(message);
 		}
 	}
@@ -292,21 +286,20 @@ public class Main {
 	 * @return a list of all valid files in the directory.
 	 */
 	private static List<File> getFiles(File dir) {
-		List<File> files = new ArrayList<>();
+		var files = new ArrayList<File>();
 
-		List<String> extensions = new ArrayList<>();
+		var extensions = new ArrayList<String>();
 		if(png) extensions.add("png");
 		if(nbt) extensions.add("nbt");
 		if(ogg) extensions.add("ogg");
 
-		String filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
+		var filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
 
-		log("Filter: " + filter);
-
-		for(File file : Objects.requireNonNull(dir.listFiles())) {
-			if(file.isDirectory())
+		//noinspection DataFlowIssue
+		for (var file : dir.listFiles()) {
+			if (file.isDirectory())
 				files.addAll(getFiles(file));
-			else if(file.getName().matches(filter))
+			else if (file.getName().matches(filter))
 				files.add(file);
 		}
 		return files;
