@@ -24,13 +24,13 @@ public class Main {
 
 	// Settings
 	static boolean
-		png,
-		nbt,
-		ogg;
+		png = true,
+		nbt = true,
+		ogg = true;
 
 	public static void main(String[] args) {
 		if(args.length < 1) {
-			err("No input specified!");
+			err("No input specified! Use --help or -h for usage.");
 			return;
 		}
 
