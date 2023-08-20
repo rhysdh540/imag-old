@@ -29,11 +29,53 @@ public class Main {
 		ogg;
 
 	public static void main(String[] args) {
-		png = false;
-		nbt = true;
-		ogg = true;
+		if(args.length < 1) {
+			err("No input specified!");
+			return;
+		}
 
-		run("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/", 3, 32);
+		if(args[0].startsWith("--help") || args[0].startsWith("-h")) {
+			log("""
+					Usage: imag <input> [options]
+					Options:
+					  --disable=<filetypes>       Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
+					  -p, --passes=<passes>       The number of times to run the processors. Default is 3.
+					  -t, --maxthreads=<threads>  The maximum number of threads to use. Default is half of the number of available processors.
+					  -h, --help                  Display this help message.
+					""");
+			return;
+		}
+
+		String path = args[0];
+		int passes = 3;
+		int maxThreads = Runtime.getRuntime().availableProcessors() / 2;
+
+		args = Arrays.copyOfRange(args, 1, args.length);
+
+		for(String arg : args) {
+			String value = arg.substring(arg.indexOf('='));
+			if(arg.startsWith("--disable")) {
+				String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
+				for(String part : parts) {
+					switch (part) {
+						case "png" -> png = false;
+						case "nbt" -> nbt = false;
+						case "ogg" -> ogg = false;
+						default -> err("Unknown file type: " + part);
+					}
+				}
+			} else {
+				if (arg.startsWith("--passes") || arg.startsWith("-p")) {
+					passes = Integer.parseInt(value);
+				} else if (arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
+					maxThreads = Integer.parseInt(value);
+				} else {
+					err("Unknown argument: " + arg);
+				}
+			}
+		}
+
+		run(path, passes, maxThreads);
 	}
 
 	/**
@@ -86,6 +128,7 @@ public class Main {
 		}
 
 		try {
+			//noinspection ResultOfMethodCallIgnored
 			new File(".workdir").getCanonicalFile().delete();
 		} catch (Exception ignored) {}
 
@@ -95,14 +138,11 @@ public class Main {
 
 		avgReduction = 100.0 - ((double) postSize / (double) preSize) * 100.0;
 
-		StringBuilder sb = new StringBuilder("\n");
+		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
+				"Saved " + totalSavings + " bytes (" + round(avgReduction) + "% of " + totalBytes + ")\n" +
+				"Max reduction: " + round(maxReduction) + "%";
 
-		sb.append("\033[1;4m").append("Done!").append("\033[0m\n");
-		sb.append("Saved ").append(totalSavings).append(" bytes (").append(round(avgReduction)).append("% of ").append(totalBytes).append(")\n");
-		sb.append("Max reduction: ").append(round(maxReduction)).append("%");
-
-		log(sb.toString());
-
+		log(s);
 		System.exit(0);
 	}
 
