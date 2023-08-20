@@ -6,7 +6,11 @@ import jdk.jfr.Percentage;
 
 import java.io.File;
 
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -17,10 +21,7 @@ public class Main {
 
 	// Statistics
 	static @Percentage double maxReduction = 0.0;
-	static @Percentage double avgReduction = 0.0;
-	static long totalBytes = 0;
-	static long totalSavings = 0;
-
+	static long maxReductionSize = 0;
 
 	// Settings
 	static boolean
@@ -28,51 +29,63 @@ public class Main {
 		nbt = true,
 		ogg = true;
 
+	static boolean debug = true;
+
 	public static void main(String[] args) {
-		if(args.length < 1) {
-			err("No input specified! Use --help or -h for usage.");
-			return;
-		}
+		String path;
+		int passes;
+		int maxThreads;
 
-		if(args[0].startsWith("--help") || args[0].startsWith("-h")) {
-			log("""
-					Usage: imag <input> [options]
-					Options:
-					  --disable=<filetypes>       Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
-					  -p, --passes=<passes>       The number of times to run the processors. Default is 3.
-					  -t, --maxthreads=<threads>  The maximum number of threads to use. Default is half of the number of available processors.
-					  -h, --help                  Display this help message.
-					""");
-			return;
-		}
+		if(!debug) {
+			if (args.length < 1) {
+				err("No input specified! Use --help or -h for usage.");
+				return;
+			}
 
-		String path = args[0];
-		int passes = 3;
-		int maxThreads = Runtime.getRuntime().availableProcessors() / 2;
+			if (args[0].startsWith("--help") || args[0].startsWith("-h")) {
+				log("""
+						Usage: imag <input> [options]
+						Options:
+						  --disable=<filetypes>       Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
+						  -p, --passes=<passes>       The number of times to run the processors. Default is 3.
+						  -t, --maxthreads=<threads>  The maximum number of threads to use. Default is half of the number of available processors.
+						  -h, --help                  Display this help message.
+						""");
+				return;
+			}
 
-		args = Arrays.copyOfRange(args, 1, args.length);
+			path = args[0];
+			passes = 3;
+			maxThreads = Runtime.getRuntime().availableProcessors() / 2;
 
-		for(String arg : args) {
-			String value = arg.substring(arg.indexOf('='));
-			if(arg.startsWith("--disable")) {
-				String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
-				for(String part : parts) {
-					switch (part) {
-						case "png" -> png = false;
-						case "nbt" -> nbt = false;
-						case "ogg" -> ogg = false;
-						default -> err("Unknown file type: " + part);
+			args = Arrays.copyOfRange(args, 1, args.length);
+
+			for (String arg : args) {
+				String value = arg.substring(arg.indexOf('='));
+				if (arg.startsWith("--disable")) {
+					String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
+					for (String part : parts) {
+						switch (part) {
+							case "png" -> png = false;
+							case "nbt" -> nbt = false;
+							case "ogg" -> ogg = false;
+							default -> err("Unknown file type: " + part);
+						}
+					}
+				} else {
+					if (arg.startsWith("--passes") || arg.startsWith("-p")) {
+						passes = Integer.parseInt(value);
+					} else if (arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
+						maxThreads = Integer.parseInt(value);
+					} else {
+						err("Unknown argument: " + arg);
 					}
 				}
-			} else {
-				if (arg.startsWith("--passes") || arg.startsWith("-p")) {
-					passes = Integer.parseInt(value);
-				} else if (arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
-					maxThreads = Integer.parseInt(value);
-				} else {
-					err("Unknown argument: " + arg);
-				}
 			}
+		} else {
+			path = "/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/block/bogeys/narrow";
+			passes = 1;
+			maxThreads = 8;
 		}
 
 		run(path, passes, maxThreads);
@@ -136,11 +149,11 @@ public class Main {
 				.mapToLong(File::length)
 				.sum();
 
-		avgReduction = 100.0 - ((double) postSize / (double) preSize) * 100.0;
+		long totalSavings = preSize - postSize;
 
 		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
-				"Saved " + totalSavings + " bytes (" + round(avgReduction) + "% of " + totalBytes + ")\n" +
-				"Max reduction: " + round(maxReduction) + "%";
+				"Saved " + totalSavings + " bytes (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
+				"Max reduction: " + maxReductionSize + " bytes";
 
 		log(s);
 		System.exit(0);
@@ -179,9 +192,7 @@ public class Main {
 		double reduction = 100.0 - ((double) postSize / (double) preSize) * 100.0;
 
 		maxReduction = Math.max(maxReduction, reduction);
-
-		totalBytes += preSize;
-		totalSavings += preSize - postSize;
+		maxReductionSize = Math.max(maxReductionSize, preSize - postSize);
 
 		StringBuilder sb = new StringBuilder("\nProcessed " + file.getName() + '\n');
 
