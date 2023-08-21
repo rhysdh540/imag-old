@@ -10,11 +10,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Main {
@@ -80,7 +78,7 @@ public class Main {
 				}
 			}
 		}
-		BinaryLoader.load();
+		Binary.load();
 
 		run(path, passes, maxThreads);
 	}
