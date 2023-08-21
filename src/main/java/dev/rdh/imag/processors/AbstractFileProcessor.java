@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static dev.rdh.imag.Main.log;
-
 @SuppressWarnings({"ResultOfMethodCallIgnored", "DuplicatedCode"})
 public abstract class AbstractFileProcessor {
 
@@ -53,9 +51,7 @@ public abstract class AbstractFileProcessor {
 		pb.start().waitFor();
 
 		if(output.exists() && output.length() < file.length()) {
-			file.delete();
-			Path path = file.toPath();
-			Files.move(output.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
+			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 

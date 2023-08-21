@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 
@@ -51,7 +50,6 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		pb.start().waitFor();
 
 		if(output.exists() && output.length() < file.length()) {
-			file.delete();
 			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}

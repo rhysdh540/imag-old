@@ -2,7 +2,6 @@ package dev.rdh.imag.processors;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,10 +54,8 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 				.min(Comparator.comparingLong(File::length))
 				.orElse(file);
 
-		if(bestResult.length() >= file.length()) {
-			return;
+		if (bestResult.length() < file.length()) {
+			Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
-
-		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
 }
