@@ -27,6 +27,8 @@ public class Main {
 		nbt = true,
 		ogg = true;
 
+	static boolean quiet = false;
+
 	public static void main(String... args) {
 		args = new String[]{"/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/entity", "-p=1"};
 
@@ -70,6 +72,8 @@ public class Main {
 					passes = Integer.parseInt(value);
 				} else if(arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
 					maxThreads = Integer.parseInt(value);
+				} else if(arg.equals("--quiet") || arg.equals("-q")) {
+					quiet = true;
 				} else {
 					err("Unknown argument: " + arg);
 				}
@@ -186,19 +190,21 @@ public class Main {
 
 		var sb = new StringBuilder("\nProcessed " + file.getName() + '\n');
 
-		if(reduction > 0.0) {
-			sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
-			sb.append("Savings of ").append(preSize - postSize).append(" bytes (").append(round(reduction)).append("%)");
-		} else {
-			sb.append("File size not changed");
+		if(!quiet) {
+			if (reduction > 0.0) {
+				sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
+				sb.append("Savings of ").append(preSize - postSize).append(" bytes (").append(round(reduction)).append("%)");
+			} else {
+				sb.append("File size not changed");
+			}
+			log(sb.toString());
 		}
-		log(sb.toString());
 	}
 
 	/**
-	 * Run an image through all of the image processors.
+	 * Run an PNG file through all of the PNG processors.
 	 * @param file the image to process. Guaranteed to be a {@code .png} file.
-	 * @return the exit code of the process.
+	 * @return an exception if one occurred, otherwise {@code null}.
 	 */
 	public static Throwable processImage(File file) {
 		var processors = Arrays.asList(
@@ -222,7 +228,7 @@ public class Main {
 	/**
 	 * Run an NBT file through the NBT processor.
 	 * @param file the NBT file to process. Guaranteed to be a {@code .nbt} file.
-	 * @return the exit code of the process.
+	 * @return an exception if one occurred, otherwise {@code null}.
 	 */
 	public static Throwable processNbt(File file) {
 		try {
@@ -236,7 +242,7 @@ public class Main {
 	/**
 	 * Run an OGG file through the OGG processor.
 	 * @param file the audio file to process. Guaranteed to be a {@code .ogg} file.
-	 * @return the exit code of the process.
+	 * @return an exception if one occurred, otherwise {@code null}.
 	 */
 	public static Throwable processOgg(File file) {
 		try {
