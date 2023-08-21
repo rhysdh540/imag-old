@@ -1,11 +1,13 @@
 package dev.rdh.imag.processors;
 
+import dev.rdh.imag.Binary;
+
 import java.io.File;
 
 public class PngFixProcessor extends AbstractFileProcessor {
 
 	private PngFixProcessor() {
-		super("png", true, "pngfix -o --strip=all -q");
+		super("png", true, Binary.PNGFIX,"-o --strip=all -q");
 	}
 
 	public static PngFixProcessor newInstance() {

@@ -1,5 +1,7 @@
 package dev.rdh.imag.processors;
 
+import dev.rdh.imag.Binary;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -14,7 +16,7 @@ import static dev.rdh.imag.Main.err;
 public class ZopfliPngProcessor extends AbstractFileProcessor {
 
 	private ZopfliPngProcessor() {
-		super("png", false, "zopflipng --iterations=15 -y --lossy_transparent");
+		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 -y --lossy_transparent");
 	}
 
 	public static ZopfliPngProcessor newInstance() {
@@ -25,6 +27,14 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 
 	@Override
 	public void process(File file) throws Exception {
+		if(!file.getCanonicalPath().endsWith(fileType))
+			return;
+
+		if(binary.toString() == null) { // If the binary is not found, skip processing
+			return;
+		}
+
+		this.command.add(0, binary.toString());
 
 		var asyncs = new CompletableFuture<?>[filters.length];
 		var outputDir = tempDir(String.valueOf(file.hashCode()));

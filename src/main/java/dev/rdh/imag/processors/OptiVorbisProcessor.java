@@ -9,7 +9,7 @@ import java.nio.file.StandardCopyOption;
 public class OptiVorbisProcessor extends AbstractFileProcessor {
 
 	public OptiVorbisProcessor() {
-		super("ogg", false, Binary.OPTIVORBIS.toString());
+		super("ogg", false, Binary.OPTIVORBIS, "-q -r ogg2ogg");
 	}
 
 	public static OptiVorbisProcessor newInstance() {

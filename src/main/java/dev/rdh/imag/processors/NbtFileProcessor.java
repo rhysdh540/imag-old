@@ -1,5 +1,7 @@
 package dev.rdh.imag.processors;
 
+import dev.rdh.imag.Binary;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -9,7 +11,7 @@ import java.util.zip.GZIPInputStream;
 
 public class NbtFileProcessor extends AbstractFileProcessor {
 	private NbtFileProcessor() {
-		super("nbt", false, "zopfli --gzip --i1000 -c");
+		super("nbt", false, Binary.ZOPFLI, "--gzip --i1000 -c");
 	}
 
 	public static NbtFileProcessor newInstance() {
