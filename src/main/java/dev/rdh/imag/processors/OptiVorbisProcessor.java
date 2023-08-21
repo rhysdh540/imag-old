@@ -6,12 +6,10 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
-import static dev.rdh.imag.Main.log;
-
 public class OptiVorbisProcessor extends AbstractFileProcessor {
 
 	public OptiVorbisProcessor() {
-		super("ogg", false, Binary.OPTIVORBIS + " -q -r ogg2ogg");
+		super("ogg", false, Binary.OPTIVORBIS.toString());
 	}
 
 	public static OptiVorbisProcessor newInstance() {

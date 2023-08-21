@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
@@ -30,13 +31,13 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		var outputDir = tempDir(String.valueOf(file.hashCode()));
 
 		for(int i = 0; i < filters.length; i++) {
-			this.command.add(1, "--filters=" + filters[i]);
-			this.command.add(file.getCanonicalPath());
-			this.command.add(filters[i] + ".png");
+			var command = new ArrayList<>(this.command);
+			command.add(1, "--filters=" + filters[i]);
+			command.add(file.getCanonicalPath());
+			command.add(filters[i] + ".png");
 
-			var builder = new ProcessBuilder(this.command);
-
-			builder.directory(outputDir)
+			var builder = new ProcessBuilder(command)
+					.directory(outputDir)
 					.redirectError(ProcessBuilder.Redirect.DISCARD)
 					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 

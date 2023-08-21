@@ -18,8 +18,8 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 	}
 
 	@Override
-	protected void addFilesToArgList(File file) throws Exception {
-		File decompressedFile = new File(".workdir" + File.separator + file.getName() + ".decompressed");
+	protected void addFilesToArgList(File file, String output) throws Exception {
+		File decompressedFile = tempFile(output + "-decompressed");
 
 		try (var in = new GZIPInputStream(new FileInputStream(file)); var out = new FileOutputStream(decompressedFile)) {
 			var buffer = new byte[4096];
@@ -37,19 +37,21 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		addFilesToArgList(file);
+		var name = String.valueOf(file.hashCode());
 
-		var output = tempFile(String.valueOf(file.hashCode()));
+		var output = tempFile(name);
+
+		addFilesToArgList(file, name);
 
 		var pb = new ProcessBuilder(command)
 				.directory(output.getParentFile())
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
 				.redirectOutput(output);
 
-		Process proc = pb.start();
-		proc.waitFor();
+		pb.start().waitFor();
 
 		if(output.exists() && output.length() < file.length()) {
+			file.delete();
 			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}

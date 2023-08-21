@@ -13,8 +13,8 @@ public class PngFixProcessor extends AbstractFileProcessor {
 	}
 
 	@Override
-	protected void addFilesToArgList(File file) throws Exception {
+	protected void addFilesToArgList(File file, String output) throws Exception {
 		command.add(file.getCanonicalPath());
-		command.add("--out=output." + fileType);
+		command.add("--out=" + output + "." + fileType);
 	}
 }

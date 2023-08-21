@@ -30,7 +30,8 @@ public class Main {
 	static boolean quiet = false;
 
 	public static void main(String... args) {
-		args = new String[]{"/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/entity", "-p=1"};
+		String a = "/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/particle";
+		args = new String[]{a, "-p=1"};
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
@@ -91,7 +92,6 @@ public class Main {
 	 * @param maxThreads the maximum number of threads to use.
 	 */
 	public static void run(String path, int passes, int maxThreads) {
-
 		var input = new File(path);
 
 		if(!input.exists()) {
@@ -114,6 +114,7 @@ public class Main {
 		log("Processing " + filesToProcess.size() + " files " + passes + " times...");
 
 		final int finalPasses = passes + 1;
+		var startTime = System.nanoTime();
 
 		var executor = Executors.newFixedThreadPool(maxThreads);
 		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
@@ -145,6 +146,7 @@ public class Main {
 		long totalSavings = preSize - postSize;
 
 		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
+				"Took " + round((System.nanoTime() - startTime) / 1e9) + " seconds\n" +
 				"Saved " + totalSavings + " bytes (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
 				"Max reduction: " + maxReductionSize + " bytes";
 

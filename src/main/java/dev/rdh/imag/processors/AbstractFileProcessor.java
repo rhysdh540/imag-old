@@ -17,7 +17,7 @@ public abstract class AbstractFileProcessor {
 	protected final String fileType;
 	final boolean front;
 
-	public AbstractFileProcessor(String fileType, boolean front, String command) {
+	protected AbstractFileProcessor(String fileType, boolean front, String command) {
 		this.fileType = fileType;
 		this.front = front;
 
@@ -26,22 +26,24 @@ public abstract class AbstractFileProcessor {
 		this.command = new ArrayList<>(Arrays.asList(strings));
 	}
 
-	protected void addFilesToArgList(File file) throws Exception {
+	protected void addFilesToArgList(File file, String output) throws Exception {
 		if(front)
 			command.add(1, file.getCanonicalPath());
 		else
 			command.add(file.getCanonicalPath());
 
-		command.add("output." + fileType);
+		command.add(output);
 	}
 
 	public void process(File file) throws Exception {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		addFilesToArgList(file);
+		var name = String.valueOf(file.hashCode());
 
-		var output = tempFile(String.valueOf(file.hashCode()));
+		var output = tempFile(name);
+
+		addFilesToArgList(file, output.getName());
 
 		var pb = new ProcessBuilder(command)
 				.directory(output.getParentFile())
@@ -49,7 +51,7 @@ public abstract class AbstractFileProcessor {
 				.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 		pb.start().waitFor();
-		output.deleteOnExit();
+
 		if(output.exists() && output.length() < file.length()) {
 			file.delete();
 			Path path = file.toPath();
