@@ -30,12 +30,11 @@ public class Main {
 		ogg = true;
 
 	static {
-		main("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/block/bogeys/narrow", "-p=1");
+		main("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", "-p=1");
 		System.exit(0);
 	}
 
 	public static void main(String... args) {
-
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
 			return;
@@ -60,7 +59,7 @@ public class Main {
 		args = Arrays.copyOfRange(args, 1, args.length);
 
 		for(var arg : args) {
-			var value = arg.substring(arg.indexOf('='));
+			var value = arg.substring(arg.indexOf('=') + 1);
 			if(arg.startsWith("--disable")) {
 				String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
 				for(var part : parts) {
@@ -81,6 +80,7 @@ public class Main {
 				}
 			}
 		}
+		BinaryLoader.load();
 
 		run(path, passes, maxThreads);
 	}
