@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static dev.rdh.imag.Main.err;
 
-@SuppressWarnings({"ResultOfMethodCallIgnored", "DataFlowIssue"})
+@SuppressWarnings({"DataFlowIssue"})
 public class ZopfliPngProcessor extends AbstractFileProcessor {
 
 	private ZopfliPngProcessor() {
@@ -27,8 +27,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 	public void process(File file) throws Exception {
 
 		var asyncs = new CompletableFuture<?>[filters.length];
-		var outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
-		outputDir.mkdirs();
+		var outputDir = tempDir(String.valueOf(file.hashCode()));
 
 		for(int i = 0; i < filters.length; i++) {
 			this.command.add(1, "--filters=" + filters[i]);
@@ -60,10 +59,5 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		}
 
 		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-		for(var f : outputDir.listFiles()) {
-			f.delete();
-		}
-		outputDir.delete();
 	}
 }

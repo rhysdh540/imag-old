@@ -37,15 +37,12 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		var outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
-		outputDir.mkdirs();
-
 		addFilesToArgList(file);
 
-		var output = new File(outputDir, "output." + fileType);
+		var output = tempFile(String.valueOf(file.hashCode()));
 
 		var pb = new ProcessBuilder(command)
-				.directory(outputDir)
+				.directory(output.getParentFile())
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
 				.redirectOutput(output);
 
@@ -53,16 +50,7 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		proc.waitFor();
 
 		if(output.exists() && output.length() < file.length()) {
-			file.delete();
-			Path path = file.toPath();
-			Files.move(output.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
+			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
-
-		//noinspection DataFlowIssue
-		for(var f : outputDir.listFiles()) {
-			f.delete();
-		}
-
-		outputDir.delete();
 	}
 }

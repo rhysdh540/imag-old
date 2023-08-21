@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static dev.rdh.imag.Main.log;
+
 @SuppressWarnings({"ResultOfMethodCallIgnored", "DuplicatedCode"})
 public abstract class AbstractFileProcessor {
 
@@ -37,30 +39,34 @@ public abstract class AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		var outputDir = new File(".workdir" + File.separator + file.hashCode()).getCanonicalFile();
-		outputDir.mkdirs();
-
 		addFilesToArgList(file);
 
+		var output = tempFile(String.valueOf(file.hashCode()));
+
 		var pb = new ProcessBuilder(command)
-				.directory(outputDir)
+				.directory(output.getParentFile())
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
 				.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 		pb.start().waitFor();
-
-		var output = new File(outputDir, "output." + fileType);
+		output.deleteOnExit();
 		if(output.exists() && output.length() < file.length()) {
 			file.delete();
 			Path path = file.toPath();
 			Files.move(output.toPath(), path, StandardCopyOption.REPLACE_EXISTING);
 		}
+	}
 
-		//noinspection DataFlowIssue
-		for(File f : outputDir.listFiles()) {
-			f.delete();
-		}
+	File tempFile(String name) throws Exception {
+		File result = File.createTempFile(name, '.' + fileType);
+		result.deleteOnExit();
+		result.delete();
+		return result;
+	}
 
-		outputDir.delete();
+	File tempDir(String name) throws Exception {
+		File result = Files.createTempDirectory(name).toFile();
+		result.deleteOnExit();
+		return result;
 	}
 }

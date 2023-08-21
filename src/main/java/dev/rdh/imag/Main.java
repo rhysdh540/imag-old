@@ -28,7 +28,7 @@ public class Main {
 		ogg = true;
 
 	public static void main(String... args) {
-		args = new String[]{"/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", "-p=1"};
+		args = new String[]{"/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/entity", "-p=1"};
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");

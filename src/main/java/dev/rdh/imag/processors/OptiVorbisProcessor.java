@@ -20,8 +20,7 @@ public class OptiVorbisProcessor extends AbstractFileProcessor {
 
 	@Override
 	public void process(File file) throws Exception {
-		var tempFile = File.createTempFile(file.hashCode() + "-original", ".ogg");
-		tempFile.delete();
+		var tempFile = tempFile(file.hashCode() + "-original");
 		Files.copy(file.toPath(), tempFile.toPath());
 
 		super.process(file);
