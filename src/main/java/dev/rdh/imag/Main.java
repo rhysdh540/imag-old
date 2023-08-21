@@ -27,12 +27,9 @@ public class Main {
 		nbt = true,
 		ogg = true;
 
-	static {
-		main("/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", "-p=1");
-		System.exit(0);
-	}
-
 	public static void main(String... args) {
+		args = new String[]{"/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/sounds", "-p=1"};
+
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
 			return;
@@ -165,19 +162,20 @@ public class Main {
 
 		var name = file.getName().toLowerCase();
 
-		int exitCode = switch(name.substring(name.lastIndexOf('.'))) {
+		Throwable t = switch(name.substring(name.lastIndexOf('.'))) {
 			case ".png" -> processImage(file);
 			case ".nbt" -> processNbt(file);
 			case ".ogg" -> processOgg(file);
 			default -> {
 				err("Unknown file type: " + name.substring(name.lastIndexOf('.')));
-				yield 1;
+				yield null;
 			}
 		};
 
-		if(exitCode != 0) {
+		if(t != null) {
 			err("Error processing " + file.getName() + "!");
-			return;
+			log(t.toString());
+			t.printStackTrace();
 		}
 
 		long postSize = file.length();
@@ -202,7 +200,7 @@ public class Main {
 	 * @param file the image to process. Guaranteed to be a {@code .png} file.
 	 * @return the exit code of the process.
 	 */
-	public static int processImage(File file) {
+	public static Throwable processImage(File file) {
 		var processors = Arrays.asList(
 				ZopfliPngProcessor.newInstance(),
 				OxiPngProcessor.newFirstInstance(),
@@ -215,10 +213,10 @@ public class Main {
 			try {
 				p.process(file);
 			} catch(Exception e) {
-				return 1;
+				return e;
 			}
 		}
-		return 0;
+		return null;
 	}
 
 	/**
@@ -226,13 +224,13 @@ public class Main {
 	 * @param file the NBT file to process. Guaranteed to be a {@code .nbt} file.
 	 * @return the exit code of the process.
 	 */
-	public static int processNbt(File file) {
+	public static Throwable processNbt(File file) {
 		try {
 			NbtFileProcessor.newInstance().process(file);
 		} catch(Exception e) {
-			return 1;
+			return e;
 		}
-		return 0;
+		return null;
 	}
 
 	/**
@@ -240,13 +238,13 @@ public class Main {
 	 * @param file the audio file to process. Guaranteed to be a {@code .ogg} file.
 	 * @return the exit code of the process.
 	 */
-	public static int processOgg(File file) {
+	public static Throwable processOgg(File file) {
 		try {
 			OptiVorbisProcessor.newInstance().process(file);
 		} catch(Exception e) {
-			return 1;
+			return e;
 		}
-		return 0;
+		return null;
 	}
 
 	/**
