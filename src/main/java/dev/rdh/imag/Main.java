@@ -29,6 +29,7 @@ public class Main {
 
 	static boolean quiet = false;
 
+	@SuppressWarnings({"ConstantValue", "ParameterCanBeLocal"})
 	public static void main(String... args) {
 		String a = "/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/particle";
 		args = new String[]{a, "-p=1"};
