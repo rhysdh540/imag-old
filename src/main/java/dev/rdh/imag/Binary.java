@@ -38,7 +38,7 @@ public enum Binary {
 		var result = classLoader.getResource(targetPath);
 
 		if(result == null) { // If the resource is not found, try to use the system's installation
-			err("Could not find binary " + targetPath + " in classpath, trying system installation");
+			err("Could not find binary " + name().toLowerCase() + " in classpath, trying system installation");
 			this.path = targetPath;
 			return;
 		}
@@ -54,7 +54,7 @@ public enum Binary {
 				e.printStackTrace();
 			}
 		}
-		log("Found binary " + targetPath + " at " + path);
+		log("Found binary " + name().toLowerCase() + " at " + path);
 		this.path = path;
 	}
 
@@ -63,7 +63,5 @@ public enum Binary {
 		return path;
 	}
 
-	public static void load() {
-
-	}
+	public static void load() {}
 }
