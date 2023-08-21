@@ -31,8 +31,8 @@ public class Main {
 
 	@SuppressWarnings({"ConstantValue", "ParameterCanBeLocal"})
 	public static void main(String... args) {
-		String a = "/Users/rhys/coding/mc/Railway/common/src/main/resources/assets/railways/textures/particle";
-		args = new String[]{a, "-p=1"};
+		String a = "/Users/rhys/coding/mc/Create-Calamity";
+		args = new String[]{a};
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
@@ -47,6 +47,7 @@ public class Main {
 					  -p, --passes=<passes>        The number of times to run the processors. Default is 3.
 					  -t, --maxthreads=<threads>   The maximum number of threads to use. Default is half of the number of available processors.
 					  -h, --help                   Display this help message.
+					  -q, --quiet                  Suppress individual log messages per file and just output for each pass and the ending statistics.
 					""");
 			return;
 		}
@@ -112,16 +113,15 @@ public class Main {
 				.mapToLong(File::length)
 				.sum();
 
-		log("Processing " + filesToProcess.size() + " files " + passes + " times...");
+		log("Processing " + filesToProcess.size() + " files " + passes + " time" + (passes == 1 ? "" : "s") + "...");
 
-		final int finalPasses = passes + 1;
 		var startTime = System.nanoTime();
 
 		var executor = Executors.newFixedThreadPool(maxThreads);
 		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
 
-		for(; passes > 0; passes--) {
-			log("\nRunning pass " + (finalPasses - passes) + "...");
+		for(final int finalPasses = passes + 1; passes > 0; passes--) {
+			log("\n\033[1;4mRunning pass " + (finalPasses - passes) + "...\033[0m");
 
 			for(int i = 0; i < filesToProcess.size(); i++) {
 				final File f = filesToProcess.get(i);
@@ -133,6 +133,13 @@ public class Main {
 			} catch(CompletionException e) {
 				err(e.getMessage());
 			}
+
+			long currentSize = filesToProcess.stream()
+					.mapToLong(File::length)
+					.sum();
+
+			log("Pass " + (finalPasses - passes) + " complete!");
+			log("Saved " + bytes(preSize - currentSize) + "!");
 		}
 
 		try {
@@ -148,8 +155,8 @@ public class Main {
 
 		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
 				"Took " + round((System.nanoTime() - startTime) / 1e9) + " seconds\n" +
-				"Saved " + totalSavings + " bytes (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
-				"Max reduction: " + maxReductionSize + " bytes";
+				"Saved " + bytes(totalSavings) + " (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
+				"Max reduction: " + bytes(maxReductionSize);
 
 		log(s);
 		System.exit(0);
@@ -196,7 +203,7 @@ public class Main {
 		if(!quiet) {
 			if (reduction > 0.0) {
 				sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
-				sb.append("Savings of ").append(preSize - postSize).append(" bytes (").append(round(reduction)).append("%)");
+				sb.append("Savings of ").append(bytes(preSize - postSize)).append(" (").append(round(reduction)).append("%)");
 			} else {
 				sb.append("File size not changed");
 			}
@@ -281,6 +288,10 @@ public class Main {
 	 */
 	public static void err(String message) {
 		log("\033[31;4m" + message + "\033[0m");
+	}
+
+	public static String bytes(long bytes) {
+		return bytes + " byte" + (bytes == 1 ? "" : "s");
 	}
 
 	/**
