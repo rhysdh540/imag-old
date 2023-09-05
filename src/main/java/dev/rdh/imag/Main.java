@@ -7,6 +7,8 @@ import jdk.jfr.Percentage;
 import java.io.File;
 
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,9 +31,11 @@ public class Main {
 
 	static boolean quiet = false;
 
+	public static final File WORKDIR = makeWorkDir();
+
 	@SuppressWarnings({"ConstantValue", "ParameterCanBeLocal"})
 	public static void main(String... args) {
-		String a = "/Users/rhys/coding/mc/Create-Calamity";
+		String a = "/Users/rhys/Downloads/sam";
 		args = new String[]{a};
 
 		if(args.length < 1) {
@@ -100,7 +104,7 @@ public class Main {
 			err("Specified input does not exist!");
 		}
 
-		var filesToProcess = input.isDirectory() ?
+		List<File> filesToProcess = input.isDirectory() ?
 				getFiles(input)
 				: List.of(input);
 
@@ -123,6 +127,10 @@ public class Main {
 		for(final int finalPasses = passes + 1; passes > 0; passes--) {
 			log("\n\033[1;4mRunning pass " + (finalPasses - passes) + "...\033[0m");
 
+			long prePassSize = filesToProcess.stream()
+					.mapToLong(File::length)
+					.sum();
+
 			for(int i = 0; i < filesToProcess.size(); i++) {
 				final File f = filesToProcess.get(i);
 				asyncs[i] = CompletableFuture.runAsync(() -> process(f), executor);
@@ -139,13 +147,8 @@ public class Main {
 					.sum();
 
 			log("Pass " + (finalPasses - passes) + " complete!");
-			log("Saved " + bytes(preSize - currentSize) + "!");
+			log("Saved " + bytes(prePassSize - currentSize) + "!");
 		}
-
-		try {
-			//noinspection ResultOfMethodCallIgnored
-			new File(".workdir").getCanonicalFile().delete();
-		} catch(Exception ignored) {}
 
 		long postSize = filesToProcess.stream()
 				.mapToLong(File::length)
@@ -319,5 +322,18 @@ public class Main {
 				files.add(file);
 		}
 		return files;
+	}
+
+	private static File makeWorkDir() {
+		try {
+			File f = Files.createTempDirectory(".workdir").toFile();
+			f.deleteOnExit();
+			return f;
+		} catch (IOException e) {
+			err("Could not create work directory!");
+			e.printStackTrace();
+			System.exit(1);
+		}
+		return null;
 	}
 }

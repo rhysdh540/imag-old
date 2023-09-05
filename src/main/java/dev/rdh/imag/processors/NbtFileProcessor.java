@@ -29,7 +29,7 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 				out.write(buffer, 0, bytesRead);
 			}
 		}
-
+		this.command.add(0, binary.toString());
 		this.command.add(decompressedFile.getCanonicalPath());
 	}
 

@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 import static dev.rdh.imag.Main.err;
 
@@ -30,12 +33,15 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		if(binary.toString() == null) { // If the binary is not found, skip processing
+		String binaryPath = binary.toString();
+
+		if(binaryPath == null) { // If the binary is not found, skip processing
 			return;
 		}
 
-		this.command.add(0, binary.toString());
+		this.command.add(0, binaryPath);
 
+		var executor = Executors.newFixedThreadPool(filters.length);
 		var asyncs = new CompletableFuture<?>[filters.length];
 		var outputDir = tempDir(String.valueOf(file.hashCode()));
 
@@ -50,7 +56,17 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 					.redirectError(ProcessBuilder.Redirect.DISCARD)
 					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
-			asyncs[i] = builder.start().onExit();
+			Supplier<Supplier<Process>> supplier = () -> () -> {
+				try {
+					Process p = builder.start();
+					p.waitFor();
+					return p;
+				} catch (Exception e) {
+					throw new CompletionException(e);
+				}
+			};
+
+			asyncs[i] = CompletableFuture.supplyAsync(supplier.get(), executor);
 		}
 
 		CompletableFuture.allOf(asyncs).join();

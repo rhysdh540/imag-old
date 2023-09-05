@@ -1,6 +1,7 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.Binary;
+import dev.rdh.imag.Main;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -28,6 +29,7 @@ public abstract class AbstractFileProcessor {
 	}
 
 	protected void addFilesToArgList(File file, String output) throws Exception {
+		this.command.add(0, binary.toString());
 		if(front)
 			command.add(1, file.getCanonicalPath());
 		else
@@ -43,8 +45,6 @@ public abstract class AbstractFileProcessor {
 		if(binary.toString() == null) { // If the binary is not found, skip processing
 			return;
 		}
-
-		this.command.add(0, binary.toString());
 
 		var name = String.valueOf(file.hashCode());
 
@@ -65,14 +65,14 @@ public abstract class AbstractFileProcessor {
 	}
 
 	File tempFile(String name) throws Exception {
-		File result = File.createTempFile(name, '.' + fileType);
+		File result = File.createTempFile(name, '.' + fileType, Main.WORKDIR);
 		result.deleteOnExit();
 		result.delete();
 		return result;
 	}
 
 	File tempDir(String name) throws Exception {
-		File result = Files.createTempDirectory(name).toFile();
+		File result = Files.createTempDirectory(Main.WORKDIR.toPath(), name).toFile();
 		result.deleteOnExit();
 		return result;
 	}

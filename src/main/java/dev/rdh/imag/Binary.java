@@ -1,7 +1,12 @@
 package dev.rdh.imag;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
+import static dev.rdh.imag.Binary.OS.*;
 import static dev.rdh.imag.Main.err;
 
 public enum Binary {
@@ -12,55 +17,86 @@ public enum Binary {
 		OPTIVORBIS,
 		PNGFIX;
 
-		private final String path;
+		private final Path path;
+		private static OS os;
 
-	Binary() {
-		String targetPath = name().toLowerCase();
+	static File tempDir;
 
-		String os = System.getProperty("os.name").toLowerCase();
-		if (os.contains("win")) {
-			os = "win";
-		} else if (os.contains("mac")) {
-			os = "mac";
-		} else {
-			os = "nix";
+	enum OS {
+		MAC,
+		WINDOWS,
+		LINUX;
+
+		@Override
+		public String toString() {
+			return switch(this) {
+				case MAC -> "mac";
+				case WINDOWS -> "win";
+				case LINUX -> "nix";
+			};
 		}
+	}
 
-		ClassLoader classLoader = Binary.class.getClassLoader();
-		targetPath = "imag/bin/" + os + "/" + targetPath;
-		targetPath = targetPath.replace("/", File.separator);
-
-		if(os.equals("win")) {
-			targetPath += ".exe";
-		}
-
-		var result = classLoader.getResource(targetPath);
-
-		if(result == null) { // If the resource is not found, skip processing
-			err("Could not find binary " + name().toLowerCase() + " in classpath");
-			this.path = null;
-			return;
-		}
-
-		String path = result.getPath();
-
-		if(os.matches("nix|mac")) {
-			ProcessBuilder pb = new ProcessBuilder("chmod", "+x", path);
-			try {
-				pb.start().waitFor();
-			} catch(Exception e) {
-				err("Could not make " + path + " executable");
-				e.printStackTrace();
+	private static void makeStuff() {
+		if (os == null) {
+			String a = System.getProperty("os.name").toLowerCase();
+			if (a.contains("win")) {
+				os = WINDOWS;
+			} else if (a.contains("mac")) {
+				os = MAC;
+			} else {
+				os = LINUX;
 			}
 		}
-		//log("Found binary " + name().toLowerCase() + " at " + path);
-		this.path = path;
+		if(tempDir == null) {
+			 tempDir = new File(System.getProperty("user.home") + File.separator + ".imag-bin");
+		}
+	}
+
+	Binary() {
+		makeStuff();
+		this.path = unpack();
 	}
 
 	@Override
 	public String toString() {
-		return path;
+		return path == null ? null : path.toFile().getAbsolutePath();
 	}
 
 	public static void load() {}
+
+	@SuppressWarnings("ResultOfMethodCallIgnored")
+	private Path unpack() {
+		String filename = name().toLowerCase();
+		if(os == WINDOWS)
+			filename += ".exe";
+
+		var target = new File(tempDir, filename);
+
+		if(target.exists())
+			return target.toPath();
+
+		var resource = "imag/bin/" + os.toString() + "/" + filename;
+
+		try(InputStream stream = Binary.class.getClassLoader()
+				.getResourceAsStream(resource)) {
+			if(stream == null) {
+				err("Could not find binary " + name().toLowerCase() + " in classpath");
+				return null;
+			}
+
+			tempDir.mkdirs();
+
+			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+			if(os == LINUX || os == MAC) {
+				target.setExecutable(true);
+			}
+			return target.toPath();
+		} catch(Exception e) {
+			err("Could not unpack binary " + name().toLowerCase());
+			e.printStackTrace();
+			return null;
+		}
+	}
 }
