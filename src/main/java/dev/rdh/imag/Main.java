@@ -33,10 +33,12 @@ public class Main {
 
 	public static final File WORKDIR = makeWorkDir();
 
-	@SuppressWarnings({"ConstantValue", "ParameterCanBeLocal"})
 	public static void main(String... args) {
-		String a = "/Users/rhys/Downloads/sam";
-		args = new String[]{a};
+		boolean debug = System.getenv("ideLaunch") != null;
+		if(debug) {
+			String a = "/Users/rhys/Downloads/imag/1.20-Quadral+v.6.09/assets/minecraft/textures/block/a_2.png";
+			args = new String[]{a, "-p=1"};
+		}
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
@@ -102,6 +104,7 @@ public class Main {
 
 		if(!input.exists()) {
 			err("Specified input does not exist!");
+			return;
 		}
 
 		List<File> filesToProcess = input.isDirectory() ?
@@ -119,7 +122,7 @@ public class Main {
 
 		log("Processing " + filesToProcess.size() + " files " + passes + " time" + (passes == 1 ? "" : "s") + "...");
 
-		var startTime = System.nanoTime();
+		var startTime = System.currentTimeMillis();
 
 		var executor = Executors.newFixedThreadPool(maxThreads);
 		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
@@ -139,15 +142,15 @@ public class Main {
 			try {
 				CompletableFuture.allOf(asyncs).join();
 			} catch(CompletionException e) {
-				err(e.getMessage());
+				err(e.getMessage(), e);
 			}
 
 			long currentSize = filesToProcess.stream()
 					.mapToLong(File::length)
 					.sum();
 
-			log("Pass " + (finalPasses - passes) + " complete!");
-			log("Saved " + bytes(prePassSize - currentSize) + "!");
+			log("\nPass " + (finalPasses - passes) + " complete!\n" +
+				"Saved " + plural(prePassSize - currentSize, "byte") + "!");
 		}
 
 		long postSize = filesToProcess.stream()
@@ -156,10 +159,12 @@ public class Main {
 
 		long totalSavings = preSize - postSize;
 
+		String time = timeFromSecs(round((System.currentTimeMillis() - startTime) / 1e3));
+
 		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
-				"Took " + round((System.nanoTime() - startTime) / 1e9) + " seconds\n" +
-				"Saved " + bytes(totalSavings) + " (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
-				"Max reduction: " + bytes(maxReductionSize);
+				"Took " + time + "\n" +
+				"Saved " + plural(totalSavings, "byte") + " (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
+				"Max reduction: " + plural(maxReductionSize, "byte");
 
 		log(s);
 		System.exit(0);
@@ -190,9 +195,7 @@ public class Main {
 		};
 
 		if(t != null) {
-			err("Error processing " + file.getName() + "!");
-			log(t.toString());
-			t.printStackTrace();
+			err("Error processing " + file.getName() + "!", t);
 		}
 
 		long postSize = file.length();
@@ -205,8 +208,8 @@ public class Main {
 
 		if(!quiet) {
 			if (reduction > 0.0) {
-				sb.append("File size decreased: ").append(preSize).append(" -> ").append(postSize).append('\n');
-				sb.append("Savings of ").append(bytes(preSize - postSize)).append(" (").append(round(reduction)).append("%)");
+				sb.append("File size decreased: ").append(format(preSize)).append(" -> ").append(plural(postSize, "byte")).append('\n');
+				sb.append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(round(reduction)).append("%)");
 			} else {
 				sb.append("File size not changed");
 			}
@@ -221,11 +224,11 @@ public class Main {
 	 */
 	public static Throwable processImage(File file) {
 		var processors = Arrays.asList(
-				ZopfliPngProcessor.newInstance(),
-				OxiPngProcessor.newFirstInstance(),
-				OxiPngProcessor.newSecondInstance(),
-				PngOutProcessor.newInstance(),
-				PngFixProcessor.newInstance()
+				ZopfliPngProcessor.get(),
+				OxiPngProcessor.getFirst(),
+				OxiPngProcessor.getSecond(),
+				PngOutProcessor.get(),
+				PngFixProcessor.get()
 		);
 
 		for(var p : processors) {
@@ -245,7 +248,7 @@ public class Main {
 	 */
 	public static Throwable processNbt(File file) {
 		try {
-			NbtFileProcessor.newInstance().process(file);
+			NbtFileProcessor.get().process(file);
 		} catch(Exception e) {
 			return e;
 		}
@@ -259,20 +262,11 @@ public class Main {
 	 */
 	public static Throwable processOgg(File file) {
 		try {
-			OptiVorbisProcessor.newInstance().process(file);
+			OptiVorbisProcessor.get().process(file);
 		} catch(Exception e) {
 			return e;
 		}
 		return null;
-	}
-
-	/**
-	 * Round a double to 2 decimal places.
-	 * @param value the value to round.
-	 * @return the rounded value.
-	 */
-	private static String round(double value) {
-		return String.format("%.2f", value);
 	}
 
 	/**
@@ -286,6 +280,17 @@ public class Main {
 	}
 
 	/**
+	 * Log an error message and stack trace to the console.
+	 * @param m the message to log.
+	 * @param t the exception to log.
+	 */
+	@SuppressWarnings("all")
+	public static void err(String m, Throwable t) {
+		err(m);
+		t.printStackTrace();
+	}
+
+	/**
 	 * Log an error message to the console.
 	 * @param message the message to log.
 	 */
@@ -293,8 +298,54 @@ public class Main {
 		log("\033[31;4m" + message + "\033[0m");
 	}
 
-	public static String bytes(long bytes) {
-		return bytes + " byte" + (bytes == 1 ? "" : "s");
+	/**
+	 * Format a number of a specific unit.
+	 * @param num the number of bytes to format.
+	 * @param unit the unit to use.
+	 * @return the formatted number of the unit.
+	 */
+	private static String plural(double num, String unit) {
+		String result = format(num) + ' ' + unit;
+		if(num != 1)
+			result += 's';
+		return result;
+	}
+
+	/**
+	 * Format a number with commas.
+	 * @param d the number to format.
+	 * @return the formatted long.
+	 */
+	private static String format(double d) {
+		if(d == (long) d)
+			return String.format("%,d", (long) d);
+
+		String r = String.format("%,f", d);
+		while(r.endsWith("0"))
+			r = r.substring(0, r.length() - 1);
+		return r;
+	}
+
+	/**
+	 * Round a double to 2 decimal places.
+	 * @param value the value to round.
+	 * @return the rounded value.
+	 */
+	private static double round(double value) {
+		return Math.round(value * 100.0) / 100.0;
+	}
+
+	/**
+	 * Format a number of seconds into a human-readable time.
+	 * @param secs the number of seconds to format.
+	 * @return the formatted time.
+	 */
+	private static String timeFromSecs(double secs) {
+		int hours = (int) (secs / 3600);
+		int minutes = (int) ((secs % 3600) / 60);
+		double seconds = secs % 60;
+
+		return plural(hours, "hr") + " " + plural(minutes, "min") + " " + plural(seconds, "second");
 	}
 
 	/**
@@ -312,6 +363,7 @@ public class Main {
 		if(nbt) extensions.add("nbt");
 		if(ogg) extensions.add("ogg");
 
+		@SuppressWarnings("all")  // regex + string concat = ???
 		var filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
 
 		//noinspection DataFlowIssue
@@ -330,8 +382,7 @@ public class Main {
 			f.deleteOnExit();
 			return f;
 		} catch (IOException e) {
-			err("Could not create work directory!");
-			e.printStackTrace();
+			err("Could not create work directory!", e);
 			System.exit(1);
 		}
 		return null;

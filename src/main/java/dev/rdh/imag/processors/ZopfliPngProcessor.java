@@ -22,7 +22,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 -y --lossy_transparent");
 	}
 
-	public static ZopfliPngProcessor newInstance() {
+	public static ZopfliPngProcessor get() {
 		return new ZopfliPngProcessor();
 	}
 

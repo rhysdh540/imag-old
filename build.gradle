@@ -3,7 +3,11 @@ plugins {
 }
 
 group = 'dev.rdh'
-version = '0'
+version = '0.1a'
+
+jar.manifest.attributes([
+        'Main-Class': 'dev.rdh.imag.Main'
+])
 
 repositories {
     mavenCentral()

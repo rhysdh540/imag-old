@@ -9,7 +9,7 @@ public class PngOutProcessor extends AbstractFileProcessor {
 		super("png", true, Binary.PNGOUT,"-q -y -r -k1 -s0");
 	}
 
-	public static PngOutProcessor newInstance() {
+	public static PngOutProcessor get() {
 		return new PngOutProcessor();
 	}
 }

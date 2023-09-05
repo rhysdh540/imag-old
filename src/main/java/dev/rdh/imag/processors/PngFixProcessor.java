@@ -10,7 +10,7 @@ public class PngFixProcessor extends AbstractFileProcessor {
 		super("png", true, Binary.PNGFIX,"-o --strip=all -q");
 	}
 
-	public static PngFixProcessor newInstance() {
+	public static PngFixProcessor get() {
 		return new PngFixProcessor();
 	}
 

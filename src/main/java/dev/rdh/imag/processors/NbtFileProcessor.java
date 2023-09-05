@@ -14,7 +14,7 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 		super("nbt", false, Binary.ZOPFLI, "--gzip --i1000 -c");
 	}
 
-	public static NbtFileProcessor newInstance() {
+	public static NbtFileProcessor get() {
 		return new NbtFileProcessor();
 	}
 

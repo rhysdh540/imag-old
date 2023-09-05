@@ -18,12 +18,12 @@ public abstract class AbstractFileProcessor {
 	protected final Binary binary;
 	final boolean front;
 
-	protected AbstractFileProcessor(String fileType, boolean front, Binary binary, String command) {
+	protected AbstractFileProcessor(String fileType, boolean front, Binary binary, String... command) {
 		this.fileType = fileType;
 		this.front = front;
 		this.binary = binary;
 
-		var strings = command.split(" ");
+		var strings = String.join(" ", command).split(" ");
 
 		this.command = new ArrayList<>(Arrays.asList(strings));
 	}

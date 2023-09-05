@@ -12,7 +12,7 @@ public class OptiVorbisProcessor extends AbstractFileProcessor {
 		super("ogg", false, Binary.OPTIVORBIS, "-q -r ogg2ogg");
 	}
 
-	public static OptiVorbisProcessor newInstance() {
+	public static OptiVorbisProcessor get() {
 		return new OptiVorbisProcessor();
 	}
 
