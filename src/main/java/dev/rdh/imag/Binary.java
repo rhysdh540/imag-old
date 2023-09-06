@@ -10,17 +10,19 @@ import static dev.rdh.imag.Binary.OS.*;
 import static dev.rdh.imag.Main.err;
 
 public enum Binary {
-		OXIPNG,
-		ZOPFLI,
-		ZOPFLIPNG,
-		PNGOUT,
-		OPTIVORBIS,
-		PNGFIX;
+	OXIPNG,
+	ZOPFLI,
+	ZOPFLIPNG,
+	PNGOUT,
+	OPTIVORBIS,
+	PNGFIX
 
-		private final Path path;
+	;
 
-		private static OS os;
-		private static File binariesDir;
+	private final Path path;
+
+	private static OS os;
+	private static File binariesDir;
 
 	enum OS {
 		MAC,
@@ -94,8 +96,7 @@ public enum Binary {
 			}
 			return target.toPath();
 		} catch(Exception e) {
-			err("Could not unpack binary " + name().toLowerCase());
-			e.printStackTrace();
+			err("Could not unpack binary " + name().toLowerCase(), e);
 			return null;
 		}
 	}

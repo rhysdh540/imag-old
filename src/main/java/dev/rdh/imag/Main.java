@@ -35,7 +35,7 @@ public class Main {
 	public static void main(String... args) {
 		boolean debug = System.getenv("ideLaunch") != null;
 		if(debug) {
-			String a = "";
+			String a = "/users";
 			args = new String[]{a, "-p=1"};
 		}
 
@@ -63,6 +63,7 @@ public class Main {
 
 		for(var arg : args) {
 			var value = arg.substring(arg.indexOf('=') + 1);
+
 			if(arg.startsWith("--disable")) {
 				String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
 				for(var part : parts) {
@@ -75,7 +76,16 @@ public class Main {
 				}
 			} else {
 				if(arg.startsWith("--passes") || arg.startsWith("-p")) {
-					passes = Integer.parseInt(value);
+					try {
+						passes = Integer.parseInt(value);
+						if(passes < 1) {
+							err("Number of passes must be at least 1!");
+							return;
+						}
+					} catch (NumberFormatException e) {
+						err("Invalid number of passes: '" + value + "'");
+						return;
+					}
 				} else if(arg.equals("--quiet") || arg.equals("-q")) {
 					quiet = true;
 				} else {
@@ -85,15 +95,6 @@ public class Main {
 		}
 		Binary.load();
 
-		run(path, passes);
-	}
-
-	/**
-	 * Run the program.
-	 * @param path the path to the file or directory to process.
-	 * @param passes the number of times to run the processors.
-	 */
-	public static void run(String path, int passes) {
 		var input = new File(path);
 
 		if(!input.exists()) {
@@ -110,11 +111,19 @@ public class Main {
 			return;
 		}
 
-		long preSize = filesToProcess.stream()
-				.mapToLong(File::length)
-				.sum();
+		run(filesToProcess, passes);
+	}
 
-		log("Processing " + filesToProcess.size() + " files " + passes + " time" + (passes == 1 ? "" : "s") + "...");
+	/**
+	 * Run the program.
+	 * @param filesToProcess the files to process.
+	 * @param passes the number of times to run the processors.
+	 */
+	public static void run(List<File> filesToProcess, int passes) {
+
+		long preSize = size(filesToProcess);
+
+		log("Processing " + filesToProcess.size() + " files " + plural(passes, "time") + "...");
 
 		var startTime = System.currentTimeMillis();
 
@@ -123,9 +132,7 @@ public class Main {
 		for(final int finalPasses = passes + 1; passes > 0; passes--) {
 			log("\n\033[1;4mRunning pass " + (finalPasses - passes) + "...\033[0m");
 
-			long prePassSize = filesToProcess.stream()
-					.mapToLong(File::length)
-					.sum();
+			long prePassSize = size(filesToProcess);
 
 			for(int i = 0; i < filesToProcess.size(); i++) {
 				final File f = filesToProcess.get(i);
@@ -135,12 +142,10 @@ public class Main {
 			try {
 				CompletableFuture.allOf(asyncs).join();
 			} catch(CompletionException e) {
-				err(e.getMessage(), e);
+				err("Processing failed!", e);
 			}
 
-			long currentSize = filesToProcess.stream()
-					.mapToLong(File::length)
-					.sum();
+			long currentSize = size(filesToProcess);
 
 			long currentSavings = prePassSize - currentSize;
 
@@ -152,9 +157,7 @@ public class Main {
 			}
 		}
 
-		long postSize = filesToProcess.stream()
-				.mapToLong(File::length)
-				.sum();
+		long postSize = size(filesToProcess);
 
 		long totalSavings = preSize - postSize;
 
@@ -377,7 +380,7 @@ public class Main {
 
 	private static File makeWorkDir() {
 		try {
-			File f = Files.createTempDirectory(".workdir").toFile();
+			File f = Files.createTempDirectory(".imag-workdir").toFile();
 			f.deleteOnExit();
 			return f;
 		} catch (IOException e) {
@@ -385,5 +388,13 @@ public class Main {
 			System.exit(1);
 		}
 		return null;
+	}
+
+	private static long size(List<File> files) {
+		long sum = 0L;
+		for(File file : files) {
+			sum += file.length();
+		}
+		return sum;
 	}
 }
