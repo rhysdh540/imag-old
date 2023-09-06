@@ -15,6 +15,7 @@ import java.util.List;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class Main {
@@ -32,6 +33,7 @@ public class Main {
 	static boolean quiet = false;
 
 	public static final File WORKDIR = makeWorkDir();
+	public static Executor exec;
 
 	public static void main(String... args) {
 		boolean debug = System.getenv("ideLaunch") != null;
@@ -124,7 +126,7 @@ public class Main {
 
 		var startTime = System.currentTimeMillis();
 
-		var executor = Executors.newFixedThreadPool(maxThreads);
+		exec = Executors.newFixedThreadPool(maxThreads);
 		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
 
 		for(final int finalPasses = passes + 1; passes > 0; passes--) {
@@ -136,7 +138,7 @@ public class Main {
 
 			for(int i = 0; i < filesToProcess.size(); i++) {
 				final File f = filesToProcess.get(i);
-				asyncs[i] = CompletableFuture.runAsync(() -> process(f), executor);
+				asyncs[i] = CompletableFuture.runAsync(() -> process(f), exec);
 			}
 
 			try {

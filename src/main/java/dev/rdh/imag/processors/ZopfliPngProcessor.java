@@ -1,6 +1,7 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.Binary;
+import dev.rdh.imag.Main;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -40,8 +41,6 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		}
 
 		this.command.add(0, binaryPath);
-
-		var executor = Executors.newFixedThreadPool(filters.length);
 		var asyncs = new CompletableFuture<?>[filters.length];
 		var outputDir = tempDir(String.valueOf(file.hashCode()));
 
@@ -56,7 +55,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 					.redirectError(ProcessBuilder.Redirect.DISCARD)
 					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
-			Supplier<Supplier<Process>> supplier = () -> () -> {
+			Supplier<Process> supplier = () -> {
 				try {
 					Process p = builder.start();
 					p.waitFor();
@@ -66,7 +65,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 				}
 			};
 
-			asyncs[i] = CompletableFuture.supplyAsync(supplier.get(), executor);
+			asyncs[i] = CompletableFuture.supplyAsync(supplier, Main.exec);
 		}
 
 		CompletableFuture.allOf(asyncs).join();

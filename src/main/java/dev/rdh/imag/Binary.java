@@ -18,9 +18,9 @@ public enum Binary {
 		PNGFIX;
 
 		private final Path path;
-		private static OS os;
 
-	static File tempDir;
+		private static OS os;
+		private static File binariesDir;
 
 	enum OS {
 		MAC,
@@ -48,8 +48,8 @@ public enum Binary {
 				os = LINUX;
 			}
 		}
-		if(tempDir == null) {
-			 tempDir = new File(System.getProperty("user.home") + File.separator + ".imag-bin");
+		if(binariesDir == null) {
+			 binariesDir = new File(System.getProperty("user.home") + File.separator + ".imag-bin");
 		}
 	}
 
@@ -71,7 +71,7 @@ public enum Binary {
 		if(os == WINDOWS)
 			filename += ".exe";
 
-		var target = new File(tempDir, filename);
+		var target = new File(binariesDir, filename);
 
 		if(target.exists())
 			return target.toPath();
@@ -85,7 +85,7 @@ public enum Binary {
 				return null;
 			}
 
-			tempDir.mkdirs();
+			binariesDir.mkdirs();
 
 			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 

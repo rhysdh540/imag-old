@@ -3,16 +3,12 @@ plugins {
 }
 
 group = 'dev.rdh'
-version = '0.1a'
+version = '0.1a' + getBuildNumber()
 
-jar.manifest.attributes([
-        'Main-Class': 'dev.rdh.imag.Main'
-])
+jar.manifest.attributes.put('Main-Class', 'dev.rdh.imag.Main')
 
-repositories {
-    mavenCentral()
+static String getBuildNumber() {
+    String buildNumber = System.getenv("GITHUB_RUN_NUMBER")
+    return buildNumber != null ? ".build-${buildNumber}" : ""
 }
 
-dependencies {
-
-}
