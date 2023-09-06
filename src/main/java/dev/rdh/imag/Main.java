@@ -15,8 +15,6 @@ import java.util.List;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class Main {
 
@@ -33,12 +31,11 @@ public class Main {
 	static boolean quiet = false;
 
 	public static final File WORKDIR = makeWorkDir();
-	public static Executor exec;
 
 	public static void main(String... args) {
 		boolean debug = System.getenv("ideLaunch") != null;
 		if(debug) {
-			String a = "/Users/rhys/Downloads/imag/1.20-Quadral+v.6.09/assets/minecraft/textures/block/a_2.png";
+			String a = "";
 			args = new String[]{a, "-p=1"};
 		}
 
@@ -53,7 +50,6 @@ public class Main {
 					Options:
 					  --disable=<filetypes>        Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
 					  -p, --passes=<passes>        The number of times to run the processors. Default is 3.
-					  -t, --maxthreads=<threads>   The maximum number of threads to use. Default is half of the number of available processors.
 					  -h, --help                   Display this help message.
 					  -q, --quiet                  Suppress individual log messages per file and just output for each pass and the ending statistics.
 					""");
@@ -62,7 +58,6 @@ public class Main {
 
 		var path = args[0];
 		var passes = 3;
-		var maxThreads = Runtime.getRuntime().availableProcessors() / 2;
 
 		args = Arrays.copyOfRange(args, 1, args.length);
 
@@ -81,8 +76,6 @@ public class Main {
 			} else {
 				if(arg.startsWith("--passes") || arg.startsWith("-p")) {
 					passes = Integer.parseInt(value);
-				} else if(arg.startsWith("--maxthreads") || arg.startsWith("-t")) {
-					maxThreads = Integer.parseInt(value);
 				} else if(arg.equals("--quiet") || arg.equals("-q")) {
 					quiet = true;
 				} else {
@@ -92,16 +85,15 @@ public class Main {
 		}
 		Binary.load();
 
-		run(path, passes, maxThreads);
+		run(path, passes);
 	}
 
 	/**
 	 * Run the program.
 	 * @param path the path to the file or directory to process.
 	 * @param passes the number of times to run the processors.
-	 * @param maxThreads the maximum number of threads to use.
 	 */
-	public static void run(String path, int passes, int maxThreads) {
+	public static void run(String path, int passes) {
 		var input = new File(path);
 
 		if(!input.exists()) {
@@ -126,7 +118,6 @@ public class Main {
 
 		var startTime = System.currentTimeMillis();
 
-		exec = Executors.newFixedThreadPool(maxThreads);
 		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
 
 		for(final int finalPasses = passes + 1; passes > 0; passes--) {
@@ -138,7 +129,7 @@ public class Main {
 
 			for(int i = 0; i < filesToProcess.size(); i++) {
 				final File f = filesToProcess.get(i);
-				asyncs[i] = CompletableFuture.runAsync(() -> process(f), exec);
+				asyncs[i] = CompletableFuture.runAsync(() -> process(f));
 			}
 
 			try {
@@ -151,8 +142,14 @@ public class Main {
 					.mapToLong(File::length)
 					.sum();
 
+			long currentSavings = prePassSize - currentSize;
+
 			log("\nPass " + (finalPasses - passes) + " complete!\n" +
-				"Saved " + plural(prePassSize - currentSize, "byte") + "!");
+				"Saved " + plural(currentSavings, "byte") + "!");
+			if(currentSavings == 0) {
+				log("Savings are 0, stopping early");
+				break;
+			}
 		}
 
 		long postSize = filesToProcess.stream()

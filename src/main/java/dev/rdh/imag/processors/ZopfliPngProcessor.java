@@ -1,7 +1,6 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.Binary;
-import dev.rdh.imag.Main;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -10,9 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.Executors;
-import java.util.function.Supplier;
 
 import static dev.rdh.imag.Main.err;
 
@@ -55,17 +51,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 					.redirectError(ProcessBuilder.Redirect.DISCARD)
 					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
-			Supplier<Process> supplier = () -> {
-				try {
-					Process p = builder.start();
-					p.waitFor();
-					return p;
-				} catch (Exception e) {
-					throw new CompletionException(e);
-				}
-			};
-
-			asyncs[i] = CompletableFuture.supplyAsync(supplier, Main.exec);
+			asyncs[i] = builder.start().onExit();
 		}
 
 		CompletableFuture.allOf(asyncs).join();
