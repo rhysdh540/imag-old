@@ -65,14 +65,14 @@ public abstract class AbstractFileProcessor {
 	}
 
 	File tempFile(String name) throws Exception {
-		File result = File.createTempFile(name, '.' + fileType, Main.WORKDIR);
+		File result = File.createTempFile(name, '.' + fileType, Main.workdir);
 		result.deleteOnExit();
 		result.delete();
 		return result;
 	}
 
 	File tempDir(String name) throws Exception {
-		File result = Files.createTempDirectory(Main.WORKDIR.toPath(), name).toFile();
+		File result = Files.createTempDirectory(Main.workdir.toPath(), name).toFile();
 		result.deleteOnExit();
 		return result;
 	}

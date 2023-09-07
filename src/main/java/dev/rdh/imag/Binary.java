@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import static dev.rdh.imag.Binary.OS.*;
-import static dev.rdh.imag.Main.err;
 
 public enum Binary {
 	OXIPNG,
@@ -83,7 +82,7 @@ public enum Binary {
 		try(InputStream stream = Binary.class.getClassLoader()
 				.getResourceAsStream(resource)) {
 			if(stream == null) {
-				err("Could not find binary " + name().toLowerCase() + " in classpath");
+				Main.logger.error("Could not find binary " + name().toLowerCase() + " in classpath");
 				return null;
 			}
 
@@ -96,7 +95,7 @@ public enum Binary {
 			}
 			return target.toPath();
 		} catch(Exception e) {
-			err("Could not unpack binary " + name().toLowerCase(), e);
+			Main.logger.error("Could not unpack binary " + name().toLowerCase(), e);
 			return null;
 		}
 	}

@@ -1,14 +1,15 @@
 package dev.rdh.imag;
 
+import dev.rdh.imag.gradle.ImagPluginExtension;
 import dev.rdh.imag.processors.*;
 
 import jdk.jfr.Percentage;
+import org.gradle.api.Project;
+import org.gradle.api.logging.Logger;
 
 import java.io.File;
 
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,88 +31,23 @@ public class Main {
 
 	static boolean quiet = false;
 
-	public static final File WORKDIR = makeWorkDir();
 
-	public static void main(String... args) {
-		boolean debug = System.getenv("ideLaunch") != null;
-		if(debug) {
-			String a = "/users";
-			args = new String[]{a, "-p=1"};
-		}
+	public static Logger logger;
 
-		if(args.length < 1) {
-			err("No input specified! Use --help or -h for usage.");
-			return;
-		}
+	public static File workdir;
 
-		if(args[0].startsWith("--help") || args[0].startsWith("-h")) {
-			log("""
-					Usage: \033[4mimag <input> [options]\033[0m
-					Options:
-					  --disable=<filetypes>        Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
-					  -p, --passes=<passes>        The number of times to run the processors. Default is 3.
-					  -h, --help                   Display this help message.
-					  -q, --quiet                  Suppress individual log messages per file and just output for each pass and the ending statistics.
-					""");
-			return;
-		}
+	public static void init(Project p) {
+		logger = p.getLogger();
+		workdir = p.getBuildDir()
+				.toPath()
+				.resolve("imag")
+				.toFile();
 
-		var path = args[0];
-		var passes = 3;
+		ImagPluginExtension config = (ImagPluginExtension) p.getExtensions().getByName("imag");
 
-		args = Arrays.copyOfRange(args, 1, args.length);
-
-		for(var arg : args) {
-			var value = arg.substring(arg.indexOf('=') + 1);
-
-			if(arg.startsWith("--disable")) {
-				String[] parts = arg.substring(arg.indexOf('=') + 1).split(",");
-				for(var part : parts) {
-					switch(part) {
-						case "png" -> png = false;
-						case "nbt" -> nbt = false;
-						case "ogg" -> ogg = false;
-						default -> err("Unknown file type: " + part);
-					}
-				}
-			} else {
-				if(arg.startsWith("--passes") || arg.startsWith("-p")) {
-					try {
-						passes = Integer.parseInt(value);
-						if(passes < 1) {
-							err("Number of passes must be at least 1!");
-							return;
-						}
-					} catch (NumberFormatException e) {
-						err("Invalid number of passes: '" + value + "'");
-						return;
-					}
-				} else if(arg.equals("--quiet") || arg.equals("-q")) {
-					quiet = true;
-				} else {
-					err("Unknown argument: " + arg);
-				}
-			}
-		}
-		Binary.load();
-
-		var input = new File(path);
-
-		if(!input.exists()) {
-			err("Specified input does not exist!");
-			return;
-		}
-
-		List<File> filesToProcess = input.isDirectory() ?
-				getFiles(input)
-				: List.of(input);
-
-		if(filesToProcess.isEmpty()) {
-			err("No files found!");
-			return;
-		}
-
-		run(filesToProcess, passes);
+		png = config.getPng().get();
+		nbt = config.getNbt().get();
+		ogg = config.getOgg().get();
 	}
 
 	/**
@@ -120,17 +56,18 @@ public class Main {
 	 * @param passes the number of times to run the processors.
 	 */
 	public static void run(List<File> filesToProcess, int passes) {
+		Binary.load();
 
 		long preSize = size(filesToProcess);
 
-		log("Processing " + filesToProcess.size() + " files " + plural(passes, "time") + "...");
+		logger.info("Processing " + filesToProcess.size() + " files " + plural(passes, "time") + "...");
 
 		var startTime = System.currentTimeMillis();
 
 		var asyncs = new CompletableFuture<?>[filesToProcess.size()];
 
 		for(final int finalPasses = passes + 1; passes > 0; passes--) {
-			log("\n\033[1;4mRunning pass " + (finalPasses - passes) + "...\033[0m");
+			logger.info("\n\033[1;4mRunning pass " + (finalPasses - passes) + "...\033[0m");
 
 			long prePassSize = size(filesToProcess);
 
@@ -142,17 +79,17 @@ public class Main {
 			try {
 				CompletableFuture.allOf(asyncs).join();
 			} catch(CompletionException e) {
-				err("Processing failed!", e);
+				logger.error("Processing failed!", e);
 			}
 
 			long currentSize = size(filesToProcess);
 
 			long currentSavings = prePassSize - currentSize;
 
-			log("\nPass " + (finalPasses - passes) + " complete!\n" +
+			logger.info("\nPass " + (finalPasses - passes) + " complete!\n" +
 				"Saved " + plural(currentSavings, "byte") + "!");
 			if(currentSavings == 0) {
-				log("Savings are 0, stopping early");
+				logger.info("Savings are 0, stopping early");
 				break;
 			}
 		}
@@ -168,7 +105,7 @@ public class Main {
 				"Saved " + plural(totalSavings, "byte") + " (" + round(((double) totalSavings / preSize) * 100) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
 				"Max reduction: " + plural(maxReductionSize, "byte");
 
-		log(s);
+		logger.info(s);
 		System.exit(0);
 	}
 
@@ -178,7 +115,7 @@ public class Main {
 	 */
 	public static void process(File file) {
 		if(file.isDirectory()) {
-			err("Directory found! This should not happen!");
+			logger.error("Directory found! This should not happen!");
 			return;
 		}
 
@@ -191,13 +128,13 @@ public class Main {
 			case ".nbt" -> processNbt(file);
 			case ".ogg" -> processOgg(file);
 			default -> {
-				err("Unknown file type: " + name.substring(name.lastIndexOf('.')));
+				logger.error("Unknown file type: " + name.substring(name.lastIndexOf('.')));
 				yield null;
 			}
 		};
 
 		if(t != null) {
-			err("Error processing " + file.getName() + "!", t);
+			logger.error("Error processing " + file.getName() + "!", t);
 		}
 
 		long postSize = file.length();
@@ -215,7 +152,7 @@ public class Main {
 			} else {
 				sb.append("File size not changed");
 			}
-			log(sb.toString());
+			logger.info(sb.toString());
 		}
 	}
 
@@ -269,35 +206,6 @@ public class Main {
 			return e;
 		}
 		return null;
-	}
-
-	/**
-	 * Log a message to the console.
-	 * @param message the message to log.
-	 */
-	public static void log(String message) {
-		synchronized(System.out) {
-			System.out.println(message);
-		}
-	}
-
-	/**
-	 * Log an error message and stack trace to the console.
-	 * @param m the message to log.
-	 * @param t the exception to log.
-	 */
-	@SuppressWarnings("all")
-	public static void err(String m, Throwable t) {
-		err(m);
-		t.printStackTrace();
-	}
-
-	/**
-	 * Log an error message to the console.
-	 * @param message the message to log.
-	 */
-	public static void err(String message) {
-		log("\033[31;4m" + message + "\033[0m");
 	}
 
 	/**
@@ -357,10 +265,11 @@ public class Main {
 	 * @param dir the directory to get files from.
 	 * @return a list of all valid files in the directory.
 	 */
-	private static List<File> getFiles(File dir) {
+	public static List<File> getFiles(File dir) {
 		var files = new ArrayList<File>();
 
 		var extensions = new ArrayList<String>();
+		extensions.add("jar");
 		if(png) extensions.add("png");
 		if(nbt) extensions.add("nbt");
 		if(ogg) extensions.add("ogg");
@@ -376,18 +285,6 @@ public class Main {
 				files.add(file);
 		}
 		return files;
-	}
-
-	private static File makeWorkDir() {
-		try {
-			File f = Files.createTempDirectory(".imag-workdir").toFile();
-			f.deleteOnExit();
-			return f;
-		} catch (IOException e) {
-			err("Could not create work directory!", e);
-			System.exit(1);
-		}
-		return null;
 	}
 
 	private static long size(List<File> files) {

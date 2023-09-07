@@ -1,2 +1,6 @@
-rootProject.name = 'imag'
+pluginManagement.repositories {
+    gradlePluginPortal()
+    mavenLocal()
+}
 
+rootProject.name = 'imag'

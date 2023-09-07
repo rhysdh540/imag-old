@@ -1,6 +1,7 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.Binary;
+import dev.rdh.imag.Main;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -9,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
-
-import static dev.rdh.imag.Main.err;
 
 @SuppressWarnings({"DataFlowIssue"})
 public class ZopfliPngProcessor extends AbstractFileProcessor {
@@ -57,7 +56,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		CompletableFuture.allOf(asyncs).join();
 
 		if(outputDir.listFiles() == null) {
-			err("No output files found!");
+			Main.logger.error("No output files found!");
 			return;
 		}
 

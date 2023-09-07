@@ -1,14 +1,31 @@
 plugins {
     id 'java'
+    id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '1.2.1'
+    id 'dev.rdh.imag' version '0.1a'
 }
 
 group = 'dev.rdh'
 version = '0.1a' + getBuildNumber()
-
-jar.manifest.attributes.put('Main-Class', 'dev.rdh.imag.Main')
 
 static String getBuildNumber() {
     String buildNumber = System.getenv("GITHUB_RUN_NUMBER")
     return buildNumber != null ? ".build-${buildNumber}" : ""
 }
 
+gradlePlugin {
+    plugins {
+        imagPlugin {
+            id = 'dev.rdh.imag'
+            displayName = 'imag'
+            implementationClass = 'dev.rdh.imag.gradle.ImagPlugin'
+        }
+    }
+
+    website = ''
+    vcsUrl = ''
+}
+
+imag {
+    enabled = true
+}
