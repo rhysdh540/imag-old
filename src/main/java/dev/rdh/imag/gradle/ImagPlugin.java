@@ -60,6 +60,5 @@ public class ImagPlugin implements Plugin<Project> {
 				optimizeTask.dependsOn(taskToHook);
 			});
 		});
-		target.getLogger().info("2");
 	}
 }

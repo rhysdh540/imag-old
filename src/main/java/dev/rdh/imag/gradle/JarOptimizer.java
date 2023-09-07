@@ -82,7 +82,6 @@ public final class JarOptimizer {
 	}
 
 	public JarOptimizer optimize() {
-		unpack();
 		List<File> files = Main.getFiles(workdir);
 		files.removeIf(file -> toIgnore.contains(file.getName()));
 		Main.run(files, config.getPasses().get());
@@ -109,6 +108,7 @@ public final class JarOptimizer {
 				JarEntry entry = new JarEntry(path);
 
 				try {
+					System.out.println("Adding " + path);
 					jar.putNextEntry(entry);
 					Files.copy(optimizedFile.toPath(), jar);
 					jar.closeEntry();
