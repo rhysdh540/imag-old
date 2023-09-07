@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+import static dev.rdh.imag.processors.Util.*;
+
 public class Main {
 
 	// Statistics
@@ -48,6 +50,8 @@ public class Main {
 		png = config.getPng().get();
 		nbt = config.getNbt().get();
 		ogg = config.getOgg().get();
+
+		Binary.load();
 	}
 
 	/**
@@ -56,8 +60,6 @@ public class Main {
 	 * @param passes the number of times to run the processors.
 	 */
 	public static void run(List<File> filesToProcess, int passes) {
-		Binary.load();
-
 		long preSize = size(filesToProcess);
 
 		logger.info("Processing " + filesToProcess.size() + " files " + plural(passes, "time") + "...");
@@ -209,56 +211,6 @@ public class Main {
 	}
 
 	/**
-	 * Format a number of a specific unit.
-	 * @param num the number of bytes to format.
-	 * @param unit the unit to use.
-	 * @return the formatted number of the unit.
-	 */
-	private static String plural(double num, String unit) {
-		String result = format(num) + ' ' + unit;
-		if(num != 1)
-			result += 's';
-		return result;
-	}
-
-	/**
-	 * Format a number with commas.
-	 * @param d the number to format.
-	 * @return the formatted long.
-	 */
-	private static String format(double d) {
-		if(d == (long) d)
-			return String.format("%,d", (long) d);
-
-		String r = String.format("%,f", d);
-		while(r.endsWith("0"))
-			r = r.substring(0, r.length() - 1);
-		return r;
-	}
-
-	/**
-	 * Round a double to 2 decimal places.
-	 * @param value the value to round.
-	 * @return the rounded value.
-	 */
-	private static double round(double value) {
-		return Math.round(value * 100.0) / 100.0;
-	}
-
-	/**
-	 * Format a number of seconds into a human-readable time.
-	 * @param secs the number of seconds to format.
-	 * @return the formatted time.
-	 */
-	private static String timeFromSecs(double secs) {
-		int hours = (int) (secs / 3600);
-		int minutes = (int) ((secs % 3600) / 60);
-		double seconds = secs % 60;
-
-		return plural(hours, "hr") + " " + plural(minutes, "min") + " " + plural(seconds, "second");
-	}
-
-	/**
 	 * Get all valid files in a directory.
 	 * <p>
 	 * Depending on the program's settings, this will only return files ending in {@code .png}, {@code .nbt}, or {@code .ogg}.
@@ -285,13 +237,5 @@ public class Main {
 				files.add(file);
 		}
 		return files;
-	}
-
-	private static long size(List<File> files) {
-		long sum = 0L;
-		for(File file : files) {
-			sum += file.length();
-		}
-		return sum;
 	}
 }

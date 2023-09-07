@@ -4,6 +4,7 @@ import dev.rdh.imag.Main;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.TaskOutputs;
 
 import java.io.File;
@@ -19,39 +20,46 @@ public class ImagPlugin implements Plugin<Project> {
 		if(taskToFinalizeAfter == null)
 			taskToFinalizeAfter = target.getTasks().findByName("assemble");
 		if(taskToFinalizeAfter == null) return;
-		taskToFinalizeAfter.doLast(a -> {
-			Main.init(target);
+		target.afterEvaluate(project -> {
+			Main.init(project);
 			if(!config.getEnabled().get()) {
-				Main.logger.lifecycle("imag disabled on this build through the 'enabled' option");
+				project.getLogger().lifecycle("imag disabled on this build through the 'enabled' option");
 				return;
 			}
+			Main.logger.info("1");
 
 			Set<String> tasks = new HashSet<>(Set.of("jar", "remapJar", "shadowJar"));
 			tasks.addAll(config.getAdditionalTasks().get());
 			tasks.removeAll(config.getIgnoredTasks().get());
 
 			tasks.forEach(name -> {
-				Task t = target.getTasks().findByName(name);
-				if(t == null) return;
-				t.doLast(task -> {
-					Main.logger.lifecycle("Running imag on task " + name);
-					TaskOutputs out = task.getOutputs();
-					if (!out.getFiles().getFiles().isEmpty()) {
-						out.getFiles().getFiles().forEach(file -> {
-							File workdir = Main.workdir
-									.toPath()
-									.resolve("imag-" + name)
-									.resolve(String.valueOf(file.hashCode()))
-									.toFile();
+				Task taskToHook = project.getTasks().findByName(name);
+				if(taskToHook == null) return;
+				FileCollection toOptimize = taskToHook.getOutputs().getFiles();
+				Task optimizeTask = project.getTasks().create("imag-" + name, OptimizeJarTask.class, task -> {
+					task.setGroup("imag");
+					task.setDescription("Auto-generated task to optimize " + name + " with imag");
 
-							new JarOptimizer(workdir, file, config, target)
-									.unpack()
-									.optimize()
-									.repackTo(file);
-						});
-					}
+					task.getInputs().files(toOptimize);
+					task.getOutputs().file(toOptimize);
+
+					File buildDir = project.getBuildDir()
+							.toPath()
+							.resolve("imag")
+							.resolve(name)
+							.toFile();
+					task.getBuildDir().set(buildDir);
+					task.getExtension().set(config);
 				});
+
+				String after = config.getFinalizeAfter().get();
+				Task finalizeTask = project.getTasks().findByName(after);
+				if(finalizeTask != null) {
+					finalizeTask.finalizedBy(optimizeTask);
+				}
+				optimizeTask.dependsOn(taskToHook);
 			});
 		});
+		target.getLogger().info("2");
 	}
 }

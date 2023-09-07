@@ -25,7 +25,3 @@ gradlePlugin {
     website = ''
     vcsUrl = ''
 }
-
-imag {
-    enabled = true
-}
