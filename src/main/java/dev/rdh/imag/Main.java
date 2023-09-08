@@ -35,7 +35,7 @@ public class Main {
 	public static void main(String... args) {
 		boolean debug = System.getenv("ideLaunch") != null;
 		if(debug) {
-			String a = "/users";
+			String a = "/users/rhys/downloads/recenttests/";
 			args = new String[]{a, "-p=1"};
 		}
 
@@ -49,7 +49,7 @@ public class Main {
 					Usage: \033[4mimag <input> [options]\033[0m
 					Options:
 					  --disable=<filetypes>        Disable processing of the specified filetypes. Valid filetypes are png, nbt, and ogg.
-					  -p, --passes=<passes>        The number of times to run the processors. Default is 3.
+					  -p, --passes=<number>        The number of times to run the processors. Default is 3.
 					  -h, --help                   Display this help message.
 					  -q, --quiet                  Suppress individual log messages per file and just output for each pass and the ending statistics.
 					""");
@@ -227,8 +227,8 @@ public class Main {
 	public static Throwable processImage(File file) {
 		var processors = Arrays.asList(
 				ZopfliPngProcessor.get(),
-				OxiPngProcessor.getFirst(),
-				OxiPngProcessor.getSecond(),
+				OxiPngProcessor.get1(),
+				OxiPngProcessor.get2(),
 				PngOutProcessor.get(),
 				PngFixProcessor.get()
 		);
