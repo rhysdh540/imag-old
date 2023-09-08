@@ -1,7 +1,7 @@
 package dev.rdh.imag.gradle;
 
 import dev.rdh.imag.Main;
-import dev.rdh.imag.processors.Util;
+import dev.rdh.imag.Util;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;

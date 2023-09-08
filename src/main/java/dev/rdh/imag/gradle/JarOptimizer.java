@@ -1,6 +1,7 @@
 package dev.rdh.imag.gradle;
 
 import dev.rdh.imag.Main;
+import dev.rdh.imag.Util;
 import org.gradle.api.Project;
 
 import java.io.File;
@@ -98,7 +99,7 @@ public final class JarOptimizer {
 			else
 				jar.setLevel(Deflater.BEST_COMPRESSION);
 
-			Main.getFiles(workdir).forEach(optimizedFile -> {
+			Util.getAllFiles(workdir).forEach(optimizedFile -> {
 				String path = optimizedFile
 						.toPath()
 						.relativize(workdir.toPath())
@@ -108,7 +109,6 @@ public final class JarOptimizer {
 				JarEntry entry = new JarEntry(path);
 
 				try {
-					System.out.println("Adding " + path);
 					jar.putNextEntry(entry);
 					Files.copy(optimizedFile.toPath(), jar);
 					jar.closeEntry();
@@ -134,7 +134,7 @@ public final class JarOptimizer {
 	}
 
 	private void optimizeJarJar() {
-		List<File> files = Main.getFiles(workdir);
+		List<File> files = Util.getAllFiles(workdir);
 		files.removeIf(file -> !file.getName().endsWith(".jar") || toIgnore.contains(file.getName())); // only jar files in list
 
 		files.forEach(file -> {

@@ -1,6 +1,7 @@
-package dev.rdh.imag.processors;
+package dev.rdh.imag;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Util {
@@ -82,5 +83,17 @@ public class Util {
 		for(File file : files) {
 			deleteRecursively(file);
 		}
+	}
+
+	public static List<File> getAllFiles(File dir) {
+		List<File> files = new ArrayList<>();
+		File[] dirFiles = dir.listFiles();
+		if(dirFiles == null) return files;
+		for(File file : dirFiles) {
+			if(file.isDirectory()) {
+				files.addAll(getAllFiles(file));
+			}
+		}
+		return files;
 	}
 }

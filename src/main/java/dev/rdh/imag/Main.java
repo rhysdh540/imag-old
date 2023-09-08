@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-import static dev.rdh.imag.processors.Util.*;
+import static dev.rdh.imag.Util.*;
 
 public class Main {
 
@@ -218,7 +218,7 @@ public class Main {
 	 * @return a list of all valid files in the directory.
 	 */
 	public static List<File> getFiles(File dir) {
-		var files = new ArrayList<File>();
+		List<File> files = Util.getAllFiles(dir);
 
 		var extensions = new ArrayList<String>();
 		extensions.add("jar");
@@ -229,13 +229,7 @@ public class Main {
 		@SuppressWarnings("all")  // regex + string concat = ???
 		var filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
 
-		//noinspection DataFlowIssue
-		for (var file : dir.listFiles()) {
-			if (file.isDirectory())
-				files.addAll(getFiles(file));
-			else if (file.getName().matches(filter))
-				files.add(file);
-		}
+		files.removeIf(file -> !file.getName().matches(filter));
 		return files;
 	}
 }
