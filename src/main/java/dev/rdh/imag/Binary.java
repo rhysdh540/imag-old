@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import static dev.rdh.imag.Binary.OS.*;
-import static dev.rdh.imag.Main.err;
+import static dev.rdh.imag.Utils.err;
 
 public enum Binary {
 	OXIPNG,

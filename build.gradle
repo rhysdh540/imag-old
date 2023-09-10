@@ -4,6 +4,7 @@ plugins {
 
 group = 'dev.rdh'
 version = '0.1a' + getBuildNumber()
+ext.manifoldVersion = '2023.1.22'
 
 jar.manifest.attributes.put('Main-Class', 'dev.rdh.imag.Main')
 
@@ -12,3 +13,36 @@ static String getBuildNumber() {
     return buildNumber != null ? ".build-${buildNumber}" : ""
 }
 
+repositories {
+    maven { url 'https://maven.minecraftforge.net/' } // for some reason manifold is hosted here (and on sonatype it doesn't work)
+}
+
+dependencies {
+    manifold 'strings'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = 17
+    options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
+}
+
+jar.from {
+    configurations.runtimeClasspath.collect {
+        it.isDirectory() ? it : zipTree(it)
+    }
+}
+
+def manifold(String path) {
+    def coords = "systems.manifold:manifold-${path}:${manifoldVersion}"
+    if(path.endsWith('rt') || path == 'util') {
+        dependencies {
+            implementation coords
+        }
+    } else {
+        dependencies {
+            annotationProcessor coords
+            compileOnly coords
+        }
+    }
+}

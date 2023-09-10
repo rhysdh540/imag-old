@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
-import static dev.rdh.imag.Main.err;
+import static dev.rdh.imag.Utils.err;
 
 @SuppressWarnings({"DataFlowIssue"})
 public class ZopfliPngProcessor extends AbstractFileProcessor {
