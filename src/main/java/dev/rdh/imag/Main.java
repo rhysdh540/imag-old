@@ -1,7 +1,5 @@
 package dev.rdh.imag;
 
-import manifold.rt.api.util.Pair;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,16 +25,19 @@ public class Main {
 		ogg = true;
 
 	static boolean quiet = false;
+	static boolean slow = false;
 
 	public static final File WORKDIR = makeWorkDir();
 
+	#if DEV
+	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue"})
+	#endif
 	public static void main(String... args) {
 		initArgs();
-		boolean debug = System.getenv("ideLaunch") != null;
-		if(debug) {
-			String a = "/users/rhys/downloads/recenttests/";
-			args = new String[]{a, "-p=1"};
-		}
+		#if DEV
+		String a = "/users/rhys/downloads/recenttests/";
+		args = new String[]{"-h"};
+		#endif
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
@@ -48,9 +49,17 @@ public class Main {
 					Usage: \033[4mimag <input> [options]\033[0m
 					Options:
 					  -p, --passes=<number>        The number of times to run the processors. Default is 3.
-					  --disable=<filetypes>        Disable processing of the specified filetypes (comma-separated). Valid filetypes are png, nbt, and ogg.
+					  
+					  --disable=<filetypes>        Disable processing of the specified filetypes (comma-separated).
+					                               Valid filetypes are 'png', 'nbt', and 'ogg'.
+					                               
+					  -s, --slow                   Process files sequentially instead of asynchronously,
+					                               which is less demanding on your computer but slower.
+					                               
 					  -h, --help                   Display this help message.
-					  -q, --quiet                  Suppress individual log messages per file and just output for each pass and the ending statistics.
+					  
+					  -q, --quiet                  Suppress individual log messages per file
+					                               and just output for each pass and the ending statistics.
 					""");
 			return;
 		}
@@ -100,7 +109,7 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 		long preSize = size(filesToProcess);
 
-		asyncs = new CompletableFuture<?>[filesToProcess.size()];
+		if(!slow) asyncs = new CompletableFuture<?>[filesToProcess.size()];
 		if(passes == 1) {
 			pass(filesToProcess, -1);
 		} else {
@@ -172,6 +181,10 @@ public class Main {
 		log(sb.toString());
 	}
 
+	private static CompletableFuture<Void> processAsync(File f) {
+		return CompletableFuture.runAsync(() -> process(f));
+	}
+
 	private static CompletableFuture<?>[] asyncs;
 
 	private static boolean pass(List<File> filesToProcess, int whatPassAmIOn) {
@@ -183,16 +196,22 @@ public class Main {
 
 		for(int i = 0; i < filesToProcess.size(); i++) {
 			final File f = filesToProcess.get(i);
-			asyncs[i] = CompletableFuture.runAsync(() -> process(f));
+			if(slow) {
+				process(f);
+			} else {
+				asyncs[i] = processAsync(f);
+			}
 		}
 
-		try {
-			CompletableFuture.allOf(asyncs).join();
-		} catch(CompletionException e) {
-			err("Processing failed!", e);
+		if(!slow) {
+			try {
+				CompletableFuture.allOf(asyncs).join();
+			} catch (CompletionException e) {
+				err("Processing failed!", e);
+			}
+			Arrays.fill(asyncs, null);
 		}
 
-		Arrays.fill(asyncs, null);
 		System.gc();
 
 		long currentSavings = prePassSize - size(filesToProcess);
@@ -210,7 +229,7 @@ public class Main {
 	static Map<Pair<String, String>, Consumer<String>> args = new HashMap<>();
 
 	private static void addArg(String longName, String shortName, Consumer<String> action) {
-		args.put(new Pair<>(longName, shortName), action);
+		args.put(Pair.of(longName, shortName), action);
 	}
 
 	private static void initArgs() {
@@ -235,12 +254,13 @@ public class Main {
 				}
 			}
 		});
+		addArg("--slow", "-s", value -> slow = true);
 		addArg("--quiet", "-q", value -> quiet = true);
 	}
 
 	private static void parseArg(String name, String value) {
 		for(Pair<String, String> pair : args.keySet()) {
-			if(name.equals(pair.getFirst()) || name.equals(pair.getSecond())) {
+			if(name.equals(pair.first()) || name.equals(pair.second())) {
 				args.get(pair).accept(value);
 				return;
 			}

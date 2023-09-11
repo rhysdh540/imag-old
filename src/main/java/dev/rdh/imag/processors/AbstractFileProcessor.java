@@ -29,7 +29,7 @@ public abstract class AbstractFileProcessor {
 	}
 
 	protected void addFilesToArgList(File file, String output) throws Exception {
-		this.command.add(0, binary.toString());
+		this.command.add(0, binary.path());
 		if(front)
 			command.add(1, file.getCanonicalPath());
 		else
@@ -42,7 +42,7 @@ public abstract class AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		if(binary.toString() == null) { // If the binary is not found, skip processing
+		if(binary.path() == null) { // If the binary is not found, skip processing
 			return;
 		}
 
@@ -64,14 +64,14 @@ public abstract class AbstractFileProcessor {
 		}
 	}
 
-	File tempFile(String name) throws Exception {
+	protected File tempFile(String name) throws Exception {
 		File result = File.createTempFile(name, '.' + fileType, Main.WORKDIR);
 		result.deleteOnExit();
 		result.delete();
 		return result;
 	}
 
-	File tempDir(String name) throws Exception {
+	protected File tempDir(String name) throws Exception {
 		File result = Files.createTempDirectory(Main.WORKDIR.toPath(), name).toFile();
 		result.deleteOnExit();
 		return result;

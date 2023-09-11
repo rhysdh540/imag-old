@@ -16,8 +16,8 @@ public class PngFixProcessor extends AbstractFileProcessor {
 
 	@Override
 	protected void addFilesToArgList(File file, String output) throws Exception {
-		command.add(0, binary.toString());
+		command.add(0, binary.path());
 		command.add(file.getCanonicalPath());
-		command.add("--out=" + output + "." + fileType);
+		command.add("--out=" + output);
 	}
 }

@@ -1,6 +1,7 @@
 plugins {
     id 'java'
 }
+setupPreprocessor()
 
 group = 'dev.rdh'
 version = '0.1a' + getBuildNumber()
@@ -19,6 +20,7 @@ repositories {
 
 dependencies {
     manifold 'strings'
+    manifold 'preprocessor'
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -27,22 +29,19 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
 }
 
-jar.from {
-    configurations.runtimeClasspath.collect {
-        it.isDirectory() ? it : zipTree(it)
-    }
-}
-
 def manifold(String path) {
     def coords = "systems.manifold:manifold-${path}:${manifoldVersion}"
-    if(path.endsWith('rt') || path == 'util') {
-        dependencies {
-            implementation coords
-        }
-    } else {
-        dependencies {
-            annotationProcessor coords
-            compileOnly coords
-        }
+    dependencies {
+        annotationProcessor coords
+        compileOnly coords
     }
+}
+def setupPreprocessor() {
+    StringBuilder sb = new StringBuilder()
+            .append('# DO NOT EDIT\n')
+
+    if(System.getenv('ideLaunch') != null)
+        sb.append('DEV=\n')
+
+    new File(projectDir, "build.properties").text = sb.toString()
 }

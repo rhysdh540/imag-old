@@ -30,7 +30,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 		if(!file.getCanonicalPath().endsWith(fileType))
 			return;
 
-		String binaryPath = binary.toString();
+		String binaryPath = binary.path();
 
 		if(binaryPath == null) { // If the binary is not found, skip processing
 			return;

@@ -60,9 +60,13 @@ public enum Binary {
 		this.path = unpack();
 	}
 
+	public String path() {
+		return path == null ? null : path.toFile().getAbsolutePath();
+	}
+
 	@Override
 	public String toString() {
-		return path == null ? null : path.toFile().getAbsolutePath();
+		return name().toLowerCase();
 	}
 
 	public static void load() {}

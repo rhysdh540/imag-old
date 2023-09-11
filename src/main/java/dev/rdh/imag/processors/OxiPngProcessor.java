@@ -12,7 +12,7 @@ public class OxiPngProcessor extends AbstractFileProcessor {
 
 	@Override
 	protected void addFilesToArgList(File file, String output) throws Exception {
-		this.command.add(0, binary.toString());
+		this.command.add(0, binary.path());
 		this.command.add("--out=" + output);
 		this.command.add(file.getCanonicalPath());
 	}
