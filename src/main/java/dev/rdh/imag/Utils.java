@@ -85,7 +85,17 @@ public class Utils {
 		int minutes = (int) ((secs % 3600) / 60);
 		double seconds = secs % 60;
 
-		return plural(hours, "hr") + ' ' + plural(minutes, "min") + ' ' + plural(seconds, "second");
+		StringBuilder sb = new StringBuilder();
+
+		if(hours != 0)
+			sb.append(plural(hours, "hr")).append(' ');
+
+		if(minutes != 0)
+			sb.append(plural(minutes, "min")).append(' ');
+
+		sb.append(seconds).append(" s");
+
+		return sb.toString();
 	}
 
 	/**

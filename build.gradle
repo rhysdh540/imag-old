@@ -24,6 +24,7 @@ dependencies {
 }
 
 tasks.withType(JavaCompile).configureEach {
+    outputs.upToDateWhen { false }
     options.encoding = "UTF-8"
     options.release = 17
     options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
@@ -43,5 +44,6 @@ def setupPreprocessor() {
     if(System.getenv('ideLaunch') != null)
         sb.append('DEV=\n')
 
+    //this only applies for local builds since the build.properties file doesn't exist on github
     new File(projectDir, "build.properties").text = sb.toString()
 }
