@@ -26,6 +26,7 @@ public class Main {
 
 	static boolean quiet = false;
 	static boolean slow = false;
+	static int passes = 3;
 
 	public static final File WORKDIR = makeWorkDir();
 
@@ -35,8 +36,8 @@ public class Main {
 	public static void main(String... args) {
 		initArgs();
 		#if DEV
-		String a = "/users/rhys/downloads/recenttests/";
-		args = new String[]{a};
+		String a = "/users/rhys/coding/Unity Projects/twosteptravel.github.io/";
+		args = new String[]{a, "-p=1"};
 		#endif
 
 		if(args.length < 1) {
@@ -65,7 +66,6 @@ public class Main {
 		}
 
 		String path = args[0];
-		int passes = 3;
 
 		args = Arrays.copyOfRange(args, 1, args.length);
 
@@ -105,7 +105,7 @@ public class Main {
 	 * @param passes the number of times to run the processors.
 	 */
 	public static void run(List<File> filesToProcess, int passes) {
-		log("Processing " + format(filesToProcess.size()) + " files " + plural(passes, "time") + "...");
+		log("Processing " + plural(filesToProcess.size(), "file") + " " + plural(passes, "time") + "...");
 
 		long startTime = System.currentTimeMillis();
 		long preSize = size(filesToProcess);
@@ -241,6 +241,7 @@ public class Main {
 					err("Passes must be greater than 0!");
 					return true;
 				}
+				Main.passes = passes;
 			} catch(NumberFormatException e) {
 				err("Invalid number of passes: ${value}");
 				return true;

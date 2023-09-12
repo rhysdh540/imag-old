@@ -84,7 +84,7 @@ public class Utils {
 		if(minutes != 0)
 			sb.append(plural(minutes, "min")).append(' ');
 
-		sb.append(seconds).append(" s");
+		sb.append(String.format("%,.2f", seconds)).append("s");
 
 		return sb.toString();
 	}
