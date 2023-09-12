@@ -1,5 +1,5 @@
 plugins {
-    id 'java'
+    id 'application'
 }
 setupPreprocessor()
 
@@ -7,7 +7,10 @@ group = 'dev.rdh'
 version = '0.1a' + getBuildNumber()
 ext.manifoldVersion = '2023.1.22'
 
-jar.manifest.attributes.put('Main-Class', 'dev.rdh.imag.Main')
+application {
+    mainClass = 'dev.rdh.imag.Main'
+    applicationDefaultJvmArgs = ['-Xmx4G', '-Xms4G']
+}
 
 static String getBuildNumber() {
     String buildNumber = System.getenv("GITHUB_RUN_NUMBER")
@@ -26,7 +29,7 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     outputs.upToDateWhen { false }
     options.encoding = "UTF-8"
-    options.release = 17
+    options.release.set 17
     options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
 }
 
@@ -37,6 +40,7 @@ def manifold(String path) {
         compileOnly coords
     }
 }
+
 def setupPreprocessor() {
     StringBuilder sb = new StringBuilder()
             .append('# DO NOT EDIT\n')

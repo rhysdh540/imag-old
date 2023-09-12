@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static dev.rdh.imag.Processing.*;
 import static dev.rdh.imag.Utils.*;
@@ -69,13 +69,14 @@ public class Main {
 
 		args = Arrays.copyOfRange(args, 1, args.length);
 
-		for(String arg : args) {
-			String[] split = arg.split("=", 2);
-			if(split.length == 1) {
-				parseArg(split[0], null);
-				continue;
-			}
-			parseArg(split[0], split[1]);
+		for(String input : args) {
+			String[] split = input.split("=", 2);
+
+			String arg = split[0];
+			String value = (split.length == 1) ? null : split[1];
+
+			if(parseArg(arg, value))
+				return;
 		}
 		Binary.load();
 
@@ -226,9 +227,9 @@ public class Main {
 		return false;
 	}
 
-	static Map<Pair<String, String>, Consumer<String>> args = new HashMap<>();
+	static Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
 
-	private static void addArg(String longName, String shortName, Consumer<String> action) {
+	private static void addArg(String longName, String shortName, Function<String, Boolean> action) {
 		args.put(Pair.of(longName, shortName), action);
 	}
 
@@ -238,10 +239,13 @@ public class Main {
 				int passes = Integer.parseInt(value);
 				if(passes < 1) {
 					err("Passes must be greater than 0!");
+					return true;
 				}
 			} catch(NumberFormatException e) {
 				err("Invalid number of passes: ${value}");
+				return true;
 			}
+			return false;
 		});
 		addArg("--disable", null, value -> {
 			String[] values = value.split(",");
@@ -250,21 +254,25 @@ public class Main {
 					case "png" -> png = false;
 					case "nbt" -> nbt = false;
 					case "ogg" -> ogg = false;
-					default -> err("Unknown filetype: ${v}");
+					default -> {
+						err("Unknown filetype: ${v}");
+						return true;
+					}
 				}
 			}
+			return false;
 		});
 		addArg("--slow", "-s", value -> slow = true);
 		addArg("--quiet", "-q", value -> quiet = true);
 	}
 
-	private static void parseArg(String name, String value) {
+	private static boolean parseArg(String name, String value) {
 		for(Pair<String, String> pair : args.keySet()) {
 			if(name.equals(pair.first()) || name.equals(pair.second())) {
-				args.get(pair).accept(value);
-				return;
+				return args.get(pair).apply(value);
 			}
 		}
-		err("Unknown argument: " + name);
+		err("Unknown argument: ${name}");
+		return true;
 	}
 }
