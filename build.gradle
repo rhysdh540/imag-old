@@ -7,6 +7,8 @@ group = 'dev.rdh'
 version = '0.1a' + getBuildNumber()
 ext.manifoldVersion = '2023.1.22'
 
+jar.manifest.attributes.put('Main-Class', 'dev.rdh.imag.Main')
+
 application {
     mainClass = 'dev.rdh.imag.Main'
     applicationDefaultJvmArgs = ['-Xmx4G', '-Xms4G']
