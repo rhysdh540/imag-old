@@ -36,7 +36,7 @@ public class Main {
 		initArgs();
 		#if DEV
 		String a = "/users/rhys/downloads/recenttests/";
-		args = new String[]{"-h"};
+		args = new String[]{a};
 		#endif
 
 		if(args.length < 1) {
@@ -123,12 +123,12 @@ public class Main {
 		long endTime = System.currentTimeMillis();
 
 		long totalSavings = preSize - postSize;
-		double timeTaken = round((endTime - startTime) / 1e3);
-		double percentage = round((double) totalSavings / preSize) * 100;
+		double timeTaken = (endTime - startTime) / 1e3;
+		double percentage = ((double) totalSavings / preSize) * 100;
 
 		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
 				"Took " + timeFromSecs(timeTaken) + "\n" +
-				"Saved " + plural(totalSavings, "byte") + " (" + format(percentage) + "% of " + preSize + ") - up to " + round(maxReduction) + "%\n" +
+				"Saved " + plural(totalSavings, "byte") + " (" + format(percentage) + "% of " + preSize + ") - up to " + format(maxReduction) + "%\n" +
 				"Max reduction: " + plural(maxReductionSize, "byte");
 
 		log(s);
@@ -158,7 +158,7 @@ public class Main {
 			}
 		};
 		long endTime = System.currentTimeMillis();
-		double timeTaken = round((endTime - startTime) / 1e3);
+		double timeTaken = (endTime - startTime) / 1e3;
 
 		if(t != null) {
 			err("Error processing ${file.getName()} !", t);
@@ -175,7 +175,7 @@ public class Main {
 
 		if (reduction > 0.0) {
 			sb.append("File size decreased: ").append(format(preSize)).append(" -> ").append(plural(postSize, "byte")).append('\n');
-			sb.append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(round(reduction)).append("%)");
+			sb.append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(format(reduction)).append("%)");
 		} else {
 			sb.append("File size not changed");
 		}

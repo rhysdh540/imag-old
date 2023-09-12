@@ -60,19 +60,10 @@ public class Utils {
 		if(d == (long) d)
 			return String.format("%,d", (long) d);
 
-		String r = String.format("%,f", d);
+		String r = String.format("%,.2f", d);
 		while(r.endsWith("0"))
 			r = r.substring(0, r.length() - 1);
 		return r;
-	}
-
-	/**
-	 * Round a double to 2 decimal places.
-	 * @param value the value to round.
-	 * @return the rounded value.
-	 */
-	public static double round(double value) {
-		return Math.round(value * 100.0) / 100.0;
 	}
 
 	/**
