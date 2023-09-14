@@ -131,7 +131,7 @@ public class Versioning {
 	 */
 	public static Version getLocalVersion() {
 		try(InputStream resource = Utils.localResource("imag/version.txt")) {
-			if(resource == null) throw new IOException("Resource not found");
+			if(resource == null) throw new IOException("Local resource not found");
 			String s = new String(resource.readAllBytes());
 			return new Version(s);
 		} catch (IOException e) {

@@ -36,6 +36,13 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
 }
 
+processResources {
+    inputs.property("version", project.version.split(".build-")[0])
+    filesMatching('imag/version.txt') {
+        expand 'version': project.version.split(".build-")[0]
+    }
+}
+
 def manifold(String path) {
     def coords = "systems.manifold:manifold-${path}:${manifoldVersion}"
     dependencies {
