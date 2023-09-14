@@ -151,6 +151,45 @@ public class Utils {
 		return Utils.class.getClassLoader().getResourceAsStream(path);
 	}
 
+	/**
+	 * Fix a path name to be correctly capitalized and have the correct path separator.
+	 * @param path the path to fix.
+	 * @return the fixed path.
+	 */
+	public static String sanitize(String path) {
+		path = path.replace('\\', '/');
+		path = path.replace('/', File.separatorChar);
+		File file = new File(path);
+
+		return recursiveSanitize(file);
+	}
+
+	private static String recursiveSanitize(File file) {
+		if (file == null)
+			return "";
+
+		String currentName = file.getName();
+		File parentFile = file.getParentFile();
+
+		if (parentFile == null) {
+			return currentName;
+		}
+
+		String parentPath = recursiveSanitize(parentFile);
+
+		File[] matchingFiles = parentFile.listFiles((dir, name) -> name.equalsIgnoreCase(currentName));
+
+		if (matchingFiles != null) {
+			for (File matchingFile : matchingFiles) {
+				if (matchingFile.getName().equalsIgnoreCase(currentName)) {
+					return parentPath + File.separator + matchingFile.getName();
+				}
+			}
+		}
+
+		return parentPath + File.separator + currentName;
+	}
+
 	public record Pair<F, S>(F first, S second) {
 		public static <F, S> Pair<F, S> of(F first, S second) {
 			return new Pair<>(first, second);

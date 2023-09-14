@@ -40,8 +40,9 @@ public class Main {
 	public static void main(String... args) {
 		initArgs();
 		#if DEV
-		String a = "/users/rhys/coding/Unity Projects/twosteptravel.github.io/";
-		args = new String[]{"--update", "--url=https://gist.githubusercontent.com/rhysdh540/d274e8b0167bf947fc5c056999c30620/raw/9ee4beb71301034eb7aabd32d6aa62c71509a28b/"};
+		String a = "/users/rHys/desKTop/VersION.txt";
+		log(sanitize(a));
+		if(true)return;
 		#endif
 
 		if(args.length < 1) {
@@ -55,7 +56,7 @@ public class Main {
 		}
 
 		if(args[0].startsWith("--update")) {
-			Versioning.update(args);
+			Versioning.downloadNewVersionIfNecessary();
 			return;
 		}
 
@@ -81,7 +82,6 @@ public class Main {
 					  --version                    Display the version of imag you are using.
 					  
 					  --update                     Update imag to the latest version.
-					    --url=<url>                The URL to download the latest version from.
 					""");
 			return;
 		}
@@ -101,7 +101,7 @@ public class Main {
 		}
 		Binary.load();
 
-		File input = new File(path);
+		File input = new File(sanitize(path));
 
 		if(!input.exists()) {
 			err("Specified input does not exist!");

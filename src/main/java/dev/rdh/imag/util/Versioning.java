@@ -84,10 +84,8 @@ public class Versioning {
 	}
 
 	public static String getUrl(String path) {
-		return url + path;
+		return "https://github.com/rhysdh540/imag/releases/latest/download/" + path;
 	}
-
-	private static String url = "https://github.com/rhysdh540/imag/releases/latest/download/";
 
 	public static void downloadNewVersionIfNecessary() {
 		Version local = Versioning.getLocalVersion();
@@ -130,13 +128,5 @@ public class Versioning {
 			err("Failed to read online version.txt: ${e.getMessage()}");
 			return new Version("0.0");
 		}
-	}
-
-	public static void update(String[] args) {
-		if(args.length == 2) {
-			url = args[1].split("=", 2)[1];
-		}
-
-		Versioning.downloadNewVersionIfNecessary();
 	}
 }
