@@ -136,7 +136,7 @@ public class Versioning {
 			return new Version(s);
 		} catch (IOException e) {
 			err("Failed to read version.txt: ${e.getMessage()}");
-			return new Version("0.0");
+			return new Version(null);
 		}
 	}
 
@@ -152,7 +152,7 @@ public class Versioning {
 			return new Version(s);
 		} catch (IOException e) {
 			err("Failed to read online version.txt: ${e.getMessage()}");
-			return new Version("0.0");
+			return new Version(null);
 		}
 	}
 
