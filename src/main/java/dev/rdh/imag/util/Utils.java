@@ -1,7 +1,9 @@
-package dev.rdh.imag;
+package dev.rdh.imag.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,6 +137,18 @@ public class Utils {
 			sum += file.length();
 		}
 		return sum;
+	}
+
+	public static InputStream getOnline(String url) {
+		try {
+			return new URL(url).openStream();
+		} catch (IOException e) {
+			return null;
+		}
+	}
+
+	public static InputStream localResource(String path) {
+		return Utils.class.getClassLoader().getResourceAsStream(path);
 	}
 
 	public record Pair<F, S>(F first, S second) {

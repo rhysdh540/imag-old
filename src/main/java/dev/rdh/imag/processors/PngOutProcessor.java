@@ -1,6 +1,6 @@
 package dev.rdh.imag.processors;
 
-import dev.rdh.imag.Binary;
+import dev.rdh.imag.util.Binary;
 
 @SuppressWarnings("DuplicatedCode")
 public class PngOutProcessor extends AbstractFileProcessor {

@@ -1,5 +1,8 @@
 package dev.rdh.imag;
 
+import dev.rdh.imag.util.Binary;
+import dev.rdh.imag.util.Versioning;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,8 +12,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-import static dev.rdh.imag.Processing.*;
-import static dev.rdh.imag.Utils.*;
+import static dev.rdh.imag.util.Processing.*;
+import static dev.rdh.imag.util.Utils.*;
 
 public class Main {
 
@@ -19,7 +22,7 @@ public class Main {
 	static long maxReductionSize = 0;
 
 	// Settings
-	static boolean
+	public static boolean
 		png = true,
 		nbt = true,
 		ogg = true;
@@ -29,15 +32,16 @@ public class Main {
 	static int passes = 3;
 
 	public static final File WORKDIR = makeWorkDir();
+	public static final File MAINDIR = new File(System.getProperty("user.home") + File.separator + ".imag");
 
 	#if DEV
-	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue"})
+	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused"})
 	#endif
 	public static void main(String... args) {
 		initArgs();
 		#if DEV
 		String a = "/users/rhys/coding/Unity Projects/twosteptravel.github.io/";
-		args = new String[]{a, "-p=1"};
+		args = new String[]{"--update", "--url=https://gist.githubusercontent.com/rhysdh540/d274e8b0167bf947fc5c056999c30620/raw/9ee4beb71301034eb7aabd32d6aa62c71509a28b/"};
 		#endif
 
 		if(args.length < 1) {
@@ -45,8 +49,20 @@ public class Main {
 			return;
 		}
 
+		if(args[0].startsWith("--version")) {
+			log("imag version " + Versioning.getLocalVersion());
+			return;
+		}
+
+		if(args[0].startsWith("--update")) {
+			Versioning.update(args);
+			return;
+		}
+
 		if(args[0].startsWith("--help") || args[0].startsWith("-h")) {
 			log("""
+					imag: a tool to reduce the size of png, nbt, and ogg files.
+     				
 					Usage: \033[4mimag <input> [options]\033[0m
 					Options:
 					  -p, --passes=<number>        The number of times to run the processors. Default is 3.
@@ -61,6 +77,11 @@ public class Main {
 					  
 					  -q, --quiet                  Suppress individual log messages per file
 					                               and just output for each pass and the ending statistics.
+					                               
+					  --version                    Display the version of imag you are using.
+					  
+					  --update                     Update imag to the latest version.
+					    --url=<url>                The URL to download the latest version from.
 					""");
 			return;
 		}
@@ -227,7 +248,7 @@ public class Main {
 		return false;
 	}
 
-	static Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
+	private static final Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
 
 	private static void addArg(String longName, String shortName, Function<String, Boolean> action) {
 		args.put(Pair.of(longName, shortName), action);
@@ -248,6 +269,7 @@ public class Main {
 			}
 			return false;
 		});
+
 		addArg("--disable", null, value -> {
 			String[] values = value.split(",");
 			for(String v : values) {
@@ -263,6 +285,7 @@ public class Main {
 			}
 			return false;
 		});
+
 		addArg("--slow", "-s", value -> slow = true);
 		addArg("--quiet", "-q", value -> quiet = true);
 	}

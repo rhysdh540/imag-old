@@ -1,4 +1,6 @@
-package dev.rdh.imag;
+package dev.rdh.imag.util;
+
+import dev.rdh.imag.Main;
 
 import java.io.File;
 import java.io.InputStream;
@@ -6,8 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import static dev.rdh.imag.Binary.OS.*;
-import static dev.rdh.imag.Utils.err;
+import static dev.rdh.imag.util.Binary.OS.*;
+import static dev.rdh.imag.util.Utils.err;
 
 public enum Binary {
 	OXIPNG,
@@ -51,7 +53,7 @@ public enum Binary {
 			}
 		}
 		if(binariesDir == null) {
-			 binariesDir = new File(System.getProperty("user.home") + File.separator + ".imag-bin");
+			 binariesDir = new File(Main.MAINDIR,  "bin");
 		}
 	}
 
@@ -84,8 +86,7 @@ public enum Binary {
 
 		var resource = "imag/bin/" + os.toString() + "/" + filename;
 
-		try(InputStream stream = Binary.class.getClassLoader()
-				.getResourceAsStream(resource)) {
+		try(InputStream stream = Utils.localResource(resource)) {
 			if(stream == null) {
 				err("Could not find binary " + name().toLowerCase() + " in classpath");
 				return null;

@@ -1,6 +1,6 @@
 package dev.rdh.imag.processors;
 
-import dev.rdh.imag.Binary;
+import dev.rdh.imag.util.Binary;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
-import static dev.rdh.imag.Utils.err;
+import static dev.rdh.imag.util.Utils.err;
 
 @SuppressWarnings({"DataFlowIssue"})
 public class ZopfliPngProcessor extends AbstractFileProcessor {

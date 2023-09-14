@@ -1,4 +1,4 @@
-package dev.rdh.imag;
+package dev.rdh.imag.util;
 
 import dev.rdh.imag.processors.*;
 
