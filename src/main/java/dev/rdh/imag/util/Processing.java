@@ -57,4 +57,6 @@ public class Processing {
 		}
 		return null;
 	}
+
+	private Processing(){}
 }

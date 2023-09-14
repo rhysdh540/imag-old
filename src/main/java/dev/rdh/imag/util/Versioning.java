@@ -1,6 +1,8 @@
 package dev.rdh.imag.util;
 
 import dev.rdh.imag.Main;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +13,13 @@ import java.nio.file.StandardCopyOption;
 import static dev.rdh.imag.util.Utils.err;
 import static dev.rdh.imag.util.Utils.log;
 
+/**
+ * A class for handling versioning. Includes functions for downloading the latest version of imag from GitHub releases.
+ */
 public class Versioning {
+	/**
+	 * A version of the form {@code major.minor.patch}.
+	 */
 	public static class Version implements Comparable<Version> {
 		private final int major;
 		private final int minor;
@@ -19,7 +27,7 @@ public class Versioning {
 
 		private final boolean invalid;
 
-		public Version(String version) {
+		public Version(@Nullable String version) {
 			if(version == null) {
 				invalid = true;
 				major = 0;
@@ -64,7 +72,7 @@ public class Versioning {
 		}
 
 		@Override
-		public int compareTo(Version o) {
+		public int compareTo(@NotNull Version o) {
 			if(invalid) return o.invalid ? 0 : -1;
 			if(major != o.major) return major - o.major;
 			if(minor != o.minor) return minor - o.minor;
@@ -83,10 +91,19 @@ public class Versioning {
 		}
 	}
 
+	/**
+	 * Get the URL for the latest release of a file.
+	 * @param path the path to the file.
+	 * @return the URL to the latest release of the file.
+	 */
 	public static String getUrl(String path) {
 		return "https://github.com/rhysdh540/imag/releases/latest/download/" + path;
 	}
 
+	/**
+	 * Download the latest version of imag if necessary.
+	 * <p>This is the main function of this class.</p>
+	 */
 	public static void downloadNewVersionIfNecessary() {
 		Version local = Versioning.getLocalVersion();
 		Version online = Versioning.getOnlineVersion();
@@ -96,7 +113,7 @@ public class Versioning {
 		}
 
 		log("Downloading new version: ${online}");
-		try(InputStream stream = Utils.getOnline(getUrl("imag-${online.toString()}.jar"))) {
+		try(InputStream stream = Utils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
 			if(stream == null) throw new IOException("URL not valid");
 
 			File f = new File(Main.MAINDIR, "imag.jar");
@@ -108,6 +125,10 @@ public class Versioning {
 		}
 	}
 
+	/**
+	 * Get the local version of imag.
+	 * @return the local version of imag.
+	 */
 	public static Version getLocalVersion() {
 		try(InputStream resource = Utils.localResource("imag/version.txt")) {
 			if(resource == null) throw new IOException("Resource not found");
@@ -119,8 +140,13 @@ public class Versioning {
 		}
 	}
 
+	/**
+	 * Get the latest version of imag.
+	 * <p>Downloads the file <a href="https://github.com/rhysdh540/imag/releases/latest/download/version.txt">https://github.com/rhysdh540/imag/releases/latest/download/version.txt</a> and checks the version it contains.</p>
+	 * @return the latest version of imag.
+	 */
 	public static Version getOnlineVersion() {
-		try(InputStream resource = Utils.getOnline(getUrl("version.txt"))) {
+		try(InputStream resource = Utils.onlineResource(getUrl("version.txt"))) {
 			if(resource == null) throw new IOException("URL not valid");
 			String s = new String(resource.readAllBytes());
 			return new Version(s);
@@ -129,4 +155,6 @@ public class Versioning {
 			return new Version("0.0");
 		}
 	}
+
+	private Versioning(){}
 }

@@ -26,6 +26,7 @@ repositories {
 dependencies {
     manifold 'strings'
     manifold 'preprocessor'
+    compileOnly 'org.jetbrains:annotations:24.0.0'
 }
 
 tasks.withType(JavaCompile).configureEach {

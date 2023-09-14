@@ -1,5 +1,8 @@
 package dev.rdh.imag.util;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +30,7 @@ public class Utils {
 	 * @param t the exception to log.
 	 */
 	@SuppressWarnings("all")
-	public static void err(String m, Throwable t) {
+	public static void err(String m, @NotNull Throwable t) {
 		err(m);
 		t.printStackTrace();
 	}
@@ -47,10 +50,7 @@ public class Utils {
 	 * @return the formatted number of the unit.
 	 */
 	public static String plural(double num, String unit) {
-		String result = format(num) + ' ' + unit;
-		if(num != 1)
-			result += 's';
-		return result;
+		return format(num) + ' ' + unit + (num != 1 ? "s" : "");
 	}
 
 	/**
@@ -86,7 +86,7 @@ public class Utils {
 		if(minutes != 0)
 			sb.append(plural(minutes, "min")).append(' ');
 
-		sb.append(String.format("%,.2f", seconds)).append("s");
+		sb.append(format(seconds)).append("s");
 
 		return sb.toString();
 	}
@@ -98,7 +98,7 @@ public class Utils {
 	 * @param dir the directory to get files from.
 	 * @return a list of all valid files in the directory.
 	 */
-	public static List<File> getFiles(File dir) {
+	public static List<File> getFiles(@NotNull File dir) {
 		var files = new ArrayList<File>();
 
 		var extensions = new ArrayList<String>();
@@ -119,6 +119,10 @@ public class Utils {
 		return files;
 	}
 
+	/**
+	 * Create a temporary directory for the program to work in.
+	 * @return the temporary directory.
+	 */
 	public static File makeWorkDir() {
 		try {
 			File f = Files.createTempDirectory(".imag-workdir").toFile();
@@ -131,7 +135,12 @@ public class Utils {
 		return null;
 	}
 
-	public static long size(List<File> files) {
+	/**
+	 * Get the total size of a list of files.
+	 * @param files the files to get the size of.
+	 * @return the total size of the files, in bytes.
+	 */
+	public static long size(@NotNull List<File> files) {
 		long sum = 0L;
 		for(File file : files) {
 			sum += file.length();
@@ -139,7 +148,12 @@ public class Utils {
 		return sum;
 	}
 
-	public static InputStream getOnline(String url) {
+	/**
+	 * Get an input stream from a URL.
+	 * @param url the URL to get the input stream from.
+	 * @return the input stream.
+	 */
+	public static @Nullable InputStream onlineResource(@NotNull String url) {
 		try {
 			return new URL(url).openStream();
 		} catch (IOException e) {
@@ -147,7 +161,12 @@ public class Utils {
 		}
 	}
 
-	public static InputStream localResource(String path) {
+	/**
+	 * Get a resource from the classpath.
+	 * @param path the path to the resource.
+	 * @return the resource as an input stream.
+	 */
+	public static @Nullable InputStream localResource(String path) {
 		return Utils.class.getClassLoader().getResourceAsStream(path);
 	}
 
@@ -190,6 +209,15 @@ public class Utils {
 		return parentPath + File.separator + currentName;
 	}
 
+	private Utils(){}
+
+	/**
+	 * A simple pair class.
+	 * @param <F> the type of the first value.
+	 * @param <S> the type of the second value.
+	 * @param first the first value.
+	 * @param second the second value.
+	 */
 	public record Pair<F, S>(F first, S second) {
 		public static <F, S> Pair<F, S> of(F first, S second) {
 			return new Pair<>(first, second);

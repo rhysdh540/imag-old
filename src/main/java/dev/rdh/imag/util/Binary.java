@@ -11,6 +11,9 @@ import java.nio.file.StandardCopyOption;
 import static dev.rdh.imag.util.Binary.OS.*;
 import static dev.rdh.imag.util.Utils.err;
 
+/**
+ * Enum of all the binaries used by this program.
+ */
 public enum Binary {
 	OXIPNG,
 	ZOPFLI,
@@ -41,6 +44,9 @@ public enum Binary {
 		}
 	}
 
+	/**
+	 * Sets the OS and binaries directory.
+	 */
 	private static void makeStuff() {
 		if (os == null) {
 			String a = System.getProperty("os.name").toLowerCase();
@@ -73,6 +79,11 @@ public enum Binary {
 
 	public static void load() {}
 
+	/**
+	 * Unpacks the binary from the jar to the binaries directory. If the binary already exists, it will not be unpacked.
+	 * <p>This is required because the filesystem cannot execute commands that are inside zipped files (like jars). So, we have to take it and move it somewhere else and then run it from there.</p>
+	 * @return The path to the binary.
+	 */
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	private Path unpack() {
 		String filename = name().toLowerCase();

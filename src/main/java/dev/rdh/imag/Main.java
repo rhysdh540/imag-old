@@ -35,14 +35,12 @@ public class Main {
 	public static final File MAINDIR = new File(System.getProperty("user.home") + File.separator + ".imag");
 
 	#if DEV
-	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused"})
+	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused", "RedundantSuppression"})
 	#endif
 	public static void main(String... args) {
 		initArgs();
 		#if DEV
-		String a = "/users/rHys/desKTop/VersION.txt";
-		log(sanitize(a));
-		if(true)return;
+		// do dev stuff here
 		#endif
 
 		if(args.length < 1) {
