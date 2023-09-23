@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static dev.rdh.imag.Main.*;
@@ -23,6 +24,17 @@ public class Utils {
 			System.out.println(message);
 		}
 	}
+
+	// Overloaded log methods
+	public static void log(int message) { log(String.valueOf(message)); }
+	public static void log(long message) { log(String.valueOf(message)); }
+	public static void log(double message) { log(String.valueOf(message)); }
+	public static void log(float message) { log(String.valueOf(message)); }
+	public static void log(boolean message) { log(String.valueOf(message)); }
+	public static void log(char message) { log(String.valueOf(message)); }
+	public static void log(byte message) { log(String.valueOf(message)); }
+	public static void log(short message) { log(String.valueOf(message)); }
+	public static void log(Object message) { log(String.valueOf(message)); }
 
 	/**
 	 * Log an error message and stack trace to the console.
@@ -96,7 +108,7 @@ public class Utils {
 	 * <p>
 	 * Depending on the program's settings, this will only return files ending in {@code .png}, {@code .nbt}, or {@code .ogg}.
 	 * @param dir the directory to get files from.
-	 * @return a list of all valid files in the directory.
+	 * @return a Deque of all valid files in the directory.
 	 */
 	public static List<File> getFiles(@NotNull File dir) {
 		var files = new ArrayList<File>();
@@ -136,11 +148,11 @@ public class Utils {
 	}
 
 	/**
-	 * Get the total size of a list of files.
+	 * Get the total size of a collection of files.
 	 * @param files the files to get the size of.
 	 * @return the total size of the files, in bytes.
 	 */
-	public static long size(@NotNull List<File> files) {
+	public static long size(@NotNull Collection<File> files) {
 		long sum = 0L;
 		for(File file : files) {
 			sum += file.length();

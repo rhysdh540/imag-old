@@ -20,7 +20,7 @@ public enum Binary {
 	ZOPFLIPNG,
 	PNGOUT,
 	OPTIVORBIS,
-	PNGFIX
+	PNGFIX,
 
 	;
 

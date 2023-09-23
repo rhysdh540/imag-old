@@ -4,10 +4,7 @@ import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.Versioning;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -40,7 +37,8 @@ public class Main {
 	public static void main(String... args) {
 		initArgs();
 		#if DEV
-		// do dev stuff here
+		String a = "/users/rhys/coding/mc/create-elemancy/";
+		args = new String[] {a, "-p=1", "--disable=nbt", "-q"};
 		#endif
 
 		if(args.length < 1) {
@@ -64,22 +62,22 @@ public class Main {
      				
 					Usage: \033[4mimag <input> [options]\033[0m
 					Options:
-					  -p, --passes=<number>        The number of times to run the processors. Default is 3.
-					  
-					  --disable=<filetypes>        Disable processing of the specified filetypes (comma-separated).
-					                               Valid filetypes are 'png', 'nbt', and 'ogg'.
-					                               
-					  -s, --slow                   Process files sequentially instead of asynchronously,
-					                               which is less demanding on your computer but slower.
-					                               
-					  -h, --help                   Display this help message.
-					  
-					  -q, --quiet                  Suppress individual log messages per file
-					                               and just output for each pass and the ending statistics.
-					                               
-					  --version                    Display the version of imag you are using.
-					  
-					  --update                     Update imag to the latest version.
+					  -p, --passes=<number>  The number of times to run the processors. Default is 3.
+	
+					  --disable=<filetypes>  Disable processing of the specified filetypes (comma-separated).
+					                         Valid filetypes are 'png', 'nbt', and 'ogg'.
+					                         
+					  -s, --slow             Process files sequentially instead of asynchronously,
+					                         which is less demanding on your computer but slower.
+					                         
+					  -h, --help             Display this help message.
+					                         
+					  -q, --quiet            Suppress individual log messages per file
+					                         and just output for each pass and the ending statistics.
+					                         
+					  --version              Display the version of imag you are using.
+	
+					  --update               Update imag to the latest version.
 					""");
 			return;
 		}
@@ -115,21 +113,21 @@ public class Main {
 			return;
 		}
 
-		run(filesToProcess, passes);
+		run(filesToProcess);
 	}
 
 	/**
 	 * Run the program.
-	 * @param filesToProcess the files to process.
-	 * @param passes the number of times to run the processors.
+	 * @param files the files to process.
 	 */
-	public static void run(List<File> filesToProcess, int passes) {
-		log("Processing " + plural(filesToProcess.size(), "file") + " " + plural(passes, "time") + "...");
+	public static void run(List<File> files) {
+		log("Processing " + plural(files.size(), "file") + " " + plural(passes, "time") + "...");
 
+		Deque<File> filesToProcess = new ArrayDeque<>(files);
 		long startTime = System.currentTimeMillis();
-		long preSize = size(filesToProcess);
+		long preSize = size(files);
 
-		if(!slow) asyncs = new CompletableFuture<?>[filesToProcess.size()];
+		asyncs = new CompletableFuture<?>[8];
 		if(passes == 1) {
 			pass(filesToProcess, -1);
 		} else {
@@ -138,7 +136,7 @@ public class Main {
 			}
 		}
 
-		long postSize = size(filesToProcess);
+		long postSize = size(files);
 		long endTime = System.currentTimeMillis();
 
 		long totalSavings = preSize - postSize;
@@ -201,43 +199,45 @@ public class Main {
 		log(sb.toString());
 	}
 
-	private static CompletableFuture<Void> processAsync(File f) {
-		return CompletableFuture.runAsync(() -> process(f));
-	}
-
 	private static CompletableFuture<?>[] asyncs;
 
-	private static boolean pass(List<File> filesToProcess, int whatPassAmIOn) {
+	private static boolean pass(Deque<File> filesToProcess, int whatPassAmIOn) {
 		boolean doLog = whatPassAmIOn != -1;
 
 		if(doLog) log("\n\033[1;4mRunning pass " + whatPassAmIOn + "...\033[0m");
 
 		long prePassSize = size(filesToProcess);
 
-		for(int i = 0; i < filesToProcess.size(); i++) {
-			final File f = filesToProcess.get(i);
-			if(slow) {
-				process(f);
-			} else {
-				asyncs[i] = processAsync(f);
+		if(slow) {
+			while(!filesToProcess.isEmpty()) {
+				process(filesToProcess.poll());
 			}
-		}
+		} else {
+			for (int i = 0; i < asyncs.length; i++) {
+				asyncs[i] = CompletableFuture.runAsync(() -> {
+					while (true) {
+						File file;
+						synchronized (filesToProcess) {
+							file = filesToProcess.poll();
+						}
+						if (file == null) break;
+						process(file);
+					}
+				});
+			}
 
-		if(!slow) {
 			try {
 				CompletableFuture.allOf(asyncs).join();
 			} catch (CompletionException e) {
 				err("Processing failed!", e);
 			}
-			Arrays.fill(asyncs, null);
 		}
 
 		System.gc();
 
 		long currentSavings = prePassSize - size(filesToProcess);
 
-		if(doLog) log("\nPass " + whatPassAmIOn + " complete!\n" +
-					  "Saved " + plural(currentSavings, "byte") + "!");
+		if(doLog) log("\nPass ${whatPassAmIOn} complete!\nSaved " + plural(currentSavings, "byte") + "!");
 
 		if(currentSavings == 0) {
 			log("Savings are 0, stopping early");
@@ -250,6 +250,13 @@ public class Main {
 
 	private static void addArg(String longName, String shortName, Function<String, Boolean> action) {
 		args.put(Pair.of(longName, shortName), action);
+	}
+
+	private static void addArg(String longName, String shortName, Runnable action) {
+		addArg(longName, shortName, value -> {
+			action.run();
+			return false;
+		});
 	}
 
 	private static void initArgs() {
@@ -284,8 +291,8 @@ public class Main {
 			return false;
 		});
 
-		addArg("--slow", "-s", value -> slow = true);
-		addArg("--quiet", "-q", value -> quiet = true);
+		addArg("--slow", "-s", () -> slow = true);
+		addArg("--quiet", "-q", () -> quiet = true);
 	}
 
 	private static boolean parseArg(String name, String value) {
