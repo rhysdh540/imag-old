@@ -35,10 +35,11 @@ public class Main {
 	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused", "RedundantSuppression"})
 	#endif
 	public static void main(String... args) {
+		System.setProperty("apple.awt.UIElement", "true"); // Don't show the dock icon on macOS
 		initArgs();
 		#if DEV
-		String a = "/users/rhys/coding/mc/create-elemancy/";
-		args = new String[] {a, "-p=1", "--disable=nbt", "-q"};
+		String a = "/users/rhys/downloads/actual downloads/yes.png";
+		args = new String[] {a};
 		#endif
 
 		if(args.length < 1) {
@@ -123,16 +124,15 @@ public class Main {
 	public static void run(List<File> files) {
 		log("Processing " + plural(files.size(), "file") + " " + plural(passes, "time") + "...");
 
-		Deque<File> filesToProcess = new ArrayDeque<>(files);
 		long startTime = System.currentTimeMillis();
 		long preSize = size(files);
 
 		asyncs = new CompletableFuture<?>[8];
 		if(passes == 1) {
-			pass(filesToProcess, -1);
+			pass(files, -1);
 		} else {
 			for(int pass = 1; pass < passes + 1; pass++) {
-				if(pass(filesToProcess, pass)) break;
+				if(pass(files, pass)) break;
 			}
 		}
 
@@ -155,7 +155,7 @@ public class Main {
 	 * Process a file and run it (or any files inside of it) through the relevant processors.
 	 * @param file the file to process. Guaranteed to not be a directory, to exist, and to end in {@code .png}, {@code .nbt}, or {@code .ogg}.
 	 */
-	public static void process(File file) {
+	public static void process(File file, boolean first) {
 		if(file.isDirectory()) {
 			err("Directory found! This should not happen!");
 			return;
@@ -166,7 +166,7 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 
 		Throwable t = switch(name.substring(name.lastIndexOf('.'))) {
-			case ".png" -> processImage(file);
+			case ".png" -> processImage(file, first);
 			case ".nbt" -> processNbt(file);
 			case ".ogg" -> processOgg(file);
 			default -> {
@@ -201,16 +201,18 @@ public class Main {
 
 	private static CompletableFuture<?>[] asyncs;
 
-	private static boolean pass(Deque<File> filesToProcess, int whatPassAmIOn) {
+	private static boolean pass(List<File> files, int whatPassAmIOn) {
 		boolean doLog = whatPassAmIOn != -1;
+
+		Deque<File> filesToProcess = new ArrayDeque<>(files);
 
 		if(doLog) log("\n\033[1;4mRunning pass " + whatPassAmIOn + "...\033[0m");
 
-		long prePassSize = size(filesToProcess);
+		long prePassSize = size(files);
 
 		if(slow) {
 			while(!filesToProcess.isEmpty()) {
-				process(filesToProcess.poll());
+				process(filesToProcess.poll(), whatPassAmIOn == 1 || doLog);
 			}
 		} else {
 			for (int i = 0; i < asyncs.length; i++) {
@@ -221,7 +223,7 @@ public class Main {
 							file = filesToProcess.poll();
 						}
 						if (file == null) break;
-						process(file);
+						process(file, whatPassAmIOn == 1 || doLog);
 					}
 				});
 			}
@@ -235,7 +237,7 @@ public class Main {
 
 		System.gc();
 
-		long currentSavings = prePassSize - size(filesToProcess);
+		long currentSavings = prePassSize - size(files);
 
 		if(doLog) log("\nPass ${whatPassAmIOn} complete!\nSaved " + plural(currentSavings, "byte") + "!");
 

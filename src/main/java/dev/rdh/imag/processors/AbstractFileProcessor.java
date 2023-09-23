@@ -59,7 +59,7 @@ public abstract class AbstractFileProcessor {
 
 		pb.start().waitFor();
 
-		if(output.exists() && output.length() < file.length()) {
+		if(output.exists()) {
 			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}

@@ -65,8 +65,6 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 				.min(Comparator.comparingLong(File::length))
 				.orElse(file);
 
-		if (bestResult.length() < file.length()) {
-			Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		}
+		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}
 }
