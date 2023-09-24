@@ -26,6 +26,7 @@ public class Main {
 
 	static boolean quiet = false;
 	static boolean slow = false;
+	static boolean encode = true;
 	static int passes = 3;
 
 	public static final File WORKDIR = makeWorkDir();
@@ -39,7 +40,7 @@ public class Main {
 		initArgs();
 		#if DEV
 		String a = "/users/rhys/downloads/actual downloads/yes.png";
-		args = new String[] {a};
+		args = new String[]{a};
 		#endif
 
 		if(args.length < 1) {
@@ -63,7 +64,7 @@ public class Main {
      				
 					Usage: \033[4mimag <input> [options]\033[0m
 					Options:
-					  -p, --passes=<number>  The number of times to run the processors. Default is 3.
+					  -p, --passes=<number>  The number of times to run the processors. Default: 3.
 	
 					  --disable=<filetypes>  Disable processing of the specified filetypes (comma-separated).
 					                         Valid filetypes are 'png', 'nbt', and 'ogg'.
@@ -75,6 +76,8 @@ public class Main {
 					                         
 					  -q, --quiet            Suppress individual log messages per file
 					                         and just output for each pass and the ending statistics.
+					                         
+					  -n, --no-encode        Disable the reencoding of PNGs before processing them.
 					                         
 					  --version              Display the version of imag you are using.
 	
@@ -155,7 +158,8 @@ public class Main {
 	 * Process a file and run it (or any files inside of it) through the relevant processors.
 	 * @param file the file to process. Guaranteed to not be a directory, to exist, and to end in {@code .png}, {@code .nbt}, or {@code .ogg}.
 	 */
-	public static void process(File file, boolean first) {
+	public static void process(File file, boolean reencodeIfImage) {
+		if(file == null) return;
 		if(file.isDirectory()) {
 			err("Directory found! This should not happen!");
 			return;
@@ -166,7 +170,7 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 
 		Throwable t = switch(name.substring(name.lastIndexOf('.'))) {
-			case ".png" -> processImage(file, first);
+			case ".png" -> processImage(file, reencodeIfImage);
 			case ".nbt" -> processNbt(file);
 			case ".ogg" -> processOgg(file);
 			default -> {
@@ -212,7 +216,8 @@ public class Main {
 
 		if(slow) {
 			while(!filesToProcess.isEmpty()) {
-				process(filesToProcess.poll(), whatPassAmIOn == 1 || doLog);
+				boolean reencodeImage = (whatPassAmIOn == 1 || doLog) && encode;
+				process(filesToProcess.poll(), reencodeImage);
 			}
 		} else {
 			for (int i = 0; i < asyncs.length; i++) {
@@ -223,7 +228,8 @@ public class Main {
 							file = filesToProcess.poll();
 						}
 						if (file == null) break;
-						process(file, whatPassAmIOn == 1 || doLog);
+						boolean reencodeImage = (whatPassAmIOn == 1 || doLog) && encode;
+						process(file, reencodeImage);
 					}
 				});
 			}
@@ -295,6 +301,7 @@ public class Main {
 
 		addArg("--slow", "-s", () -> slow = true);
 		addArg("--quiet", "-q", () -> quiet = true);
+		addArg("--no-encode", "-n", () -> encode = false);
 	}
 
 	private static boolean parseArg(String name, String value) {

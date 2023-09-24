@@ -12,9 +12,10 @@ public class Processing {
 	/**
 	 * Run an PNG file through all of the PNG processors.
 	 * @param file the image to process. Guaranteed to be a {@code .png} file.
+	 * @param reencode whether or not to reencode the image.
 	 * @return an exception if one occurred, otherwise {@code null}.
 	 */
-	public static Throwable processImage(File file, boolean first) {
+	public static Throwable processImage(File file, boolean reencode) {
 		var processors = new ArrayList<>(Arrays.asList(
 				ZopfliPngProcessor.get(),
 				OxiPngProcessor.get1(),
@@ -23,7 +24,7 @@ public class Processing {
 				PngFixProcessor.get()
 		));
 
-		if(first)
+		if(reencode)
 			processors.add(0, ImageIOProcessor.get());
 
 		//create a temporary file with the contents of the original file
