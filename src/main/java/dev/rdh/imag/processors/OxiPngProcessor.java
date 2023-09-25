@@ -7,7 +7,7 @@ import java.io.File;
 public class OxiPngProcessor extends AbstractFileProcessor {
 
 	private OxiPngProcessor(String command) {
-		super("png", false, Binary.OXIPNG,"-o max -q -a --zc 12", command);
+		super("png", false, Binary.OXIPNG,"-o max -q", command);
 	}
 
 	@Override
@@ -18,10 +18,10 @@ public class OxiPngProcessor extends AbstractFileProcessor {
 	}
 
 	public static OxiPngProcessor get1() {
-		return new OxiPngProcessor("--nx");
+		return new OxiPngProcessor("");
 	}
 
 	public static OxiPngProcessor get2() {
-		return new OxiPngProcessor("");
+		return new OxiPngProcessor("-a");
 	}
 }

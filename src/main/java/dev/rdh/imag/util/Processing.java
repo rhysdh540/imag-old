@@ -17,9 +17,9 @@ public class Processing {
 	 */
 	public static Throwable processImage(File file, boolean reencode) {
 		var processors = new ArrayList<>(Arrays.asList(
-				ZopfliPngProcessor.get(),
 				OxiPngProcessor.get1(),
 				OxiPngProcessor.get2(),
+				ZopfliPngProcessor.get(),
 				PngOutProcessor.get(),
 				PngFixProcessor.get()
 		));
@@ -28,10 +28,11 @@ public class Processing {
 			processors.add(0, ImageIOProcessor.get());
 
 		//create a temporary file with the contents of the original file
-		var temp = file.getParentFile().toPath().resolve("imag-" + file.getName()).toFile();
+		var temp = file.getParentFile().toPath().resolve(".imag-" + file.getName()).toFile();
 		try {
 			Files.copy(file.toPath(), temp.toPath());
 		} catch(Exception e) {
+			temp.delete();
 			return e;
 		}
 

@@ -39,7 +39,7 @@ public class Main {
 		System.setProperty("apple.awt.UIElement", "true"); // Don't show the dock icon on macOS
 		initArgs();
 		#if DEV
-		String a = "/users/rhys/downloads/actual downloads/yes.png";
+		String a = "/users/rhys/downloads/actual downloads/ntl.png";
 		args = new String[]{a};
 		#endif
 

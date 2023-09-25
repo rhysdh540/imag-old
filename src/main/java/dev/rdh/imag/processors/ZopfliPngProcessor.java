@@ -16,7 +16,7 @@ import static dev.rdh.imag.util.Utils.err;
 public class ZopfliPngProcessor extends AbstractFileProcessor {
 
 	private ZopfliPngProcessor() {
-		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 -y --lossy_transparent");
+		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 -y");
 	}
 
 	public static ZopfliPngProcessor get() {
