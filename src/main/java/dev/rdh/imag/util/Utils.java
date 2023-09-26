@@ -1,5 +1,6 @@
 package dev.rdh.imag.util;
 
+import manifold.util.ReflectUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,6 +220,14 @@ public class Utils {
 		}
 
 		return parentPath + File.separator + currentName;
+	}
+
+	public static boolean echo(boolean on) {
+		try {
+			return (boolean) ReflectUtil.method(System.console(), "echo", boolean.class).invoke(on);
+		} catch (Throwable ignore) { // echo throws an ioexception
+			return false;
+		}
 	}
 
 	private Utils(){}

@@ -1,10 +1,16 @@
 package dev.rdh.imag;
 
 import dev.rdh.imag.util.Binary;
+import dev.rdh.imag.util.Utils;
 import dev.rdh.imag.util.Versioning;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
@@ -27,6 +33,8 @@ public class Main {
 	static boolean quiet = false;
 	static boolean slow = false;
 	static boolean encode = true;
+	static boolean quitEarly = true;
+	static int threads = 8;
 	static int passes = 3;
 
 	public static final File WORKDIR = makeWorkDir();
@@ -37,6 +45,8 @@ public class Main {
 	#endif
 	public static void main(String... args) {
 		System.setProperty("apple.awt.UIElement", "true"); // Don't show the dock icon on macOS
+		Utils.echo(false);
+		log("\033[?25l");
 		initArgs();
 		#if DEV
 		String a = "/users/rhys/downloads/actual downloads/ntl.png";
@@ -45,16 +55,19 @@ public class Main {
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
+			log("\033[?25h");
 			return;
 		}
 
 		if(args[0].startsWith("--version")) {
 			log("imag version " + Versioning.getLocalVersion());
+			log("\033[?25h");
 			return;
 		}
 
 		if(args[0].startsWith("--update")) {
 			Versioning.downloadNewVersionIfNecessary();
+			log("\033[?25h");
 			return;
 		}
 
@@ -69,6 +82,8 @@ public class Main {
 					  --disable=<filetypes>  Disable processing of the specified filetypes (comma-separated).
 					                         Valid filetypes are 'png', 'nbt', and 'ogg'.
 					                         
+					  -t, --max-threads      The number of threads to use. Default: 8.
+					                         
 					  -s, --slow             Process files sequentially instead of asynchronously,
 					                         which is less demanding on your computer but slower.
 					                         
@@ -78,11 +93,14 @@ public class Main {
 					                         and just output for each pass and the ending statistics.
 					                         
 					  -n, --no-encode        Disable the reencoding of PNGs before processing them.
+					  
+					  -f, --force            Continue to process even if savings are 0.
 					                         
 					  --version              Display the version of imag you are using.
 	
 					  --update               Update imag to the latest version.
 					""");
+			log("\033[?25h");
 			return;
 		}
 
@@ -118,6 +136,7 @@ public class Main {
 		}
 
 		run(filesToProcess);
+		log("\033[?25h");
 	}
 
 	/**
@@ -130,13 +149,11 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 		long preSize = size(files);
 
-		asyncs = new CompletableFuture<?>[8];
+		asyncs = new CompletableFuture<?>[threads];
 		if(passes == 1) {
 			pass(files, -1);
-		} else {
-			for(int pass = 1; pass < passes + 1; pass++) {
-				if(pass(files, pass)) break;
-			}
+		} else for(int pass = 1; pass < passes + 1; pass++) {
+			if(pass(files, pass)) break;
 		}
 
 		long postSize = size(files);
@@ -247,7 +264,7 @@ public class Main {
 
 		if(doLog) log("\nPass ${whatPassAmIOn} complete!\nSaved " + plural(currentSavings, "byte") + "!");
 
-		if(currentSavings == 0) {
+		if(currentSavings == 0 && quitEarly) {
 			log("Savings are 0, stopping early");
 			return true;
 		}
@@ -299,9 +316,25 @@ public class Main {
 			return false;
 		});
 
+		addArg("--max-threads", "-t", value -> {
+			try {
+				int threads = Integer.parseInt(value);
+				if(threads < 1) {
+					err("Threads must be greater than 0!");
+					return true;
+				}
+				Main.threads = threads;
+			} catch(NumberFormatException e) {
+				err("Invalid number of threads: ${value}");
+				return true;
+			}
+			return false;
+		});
+
 		addArg("--slow", "-s", () -> slow = true);
 		addArg("--quiet", "-q", () -> quiet = true);
 		addArg("--no-encode", "-n", () -> encode = false);
+		addArg("--force", "-f", () -> quitEarly = false);
 	}
 
 	private static boolean parseArg(String name, String value) {

@@ -95,7 +95,7 @@ public enum Binary {
 		if(target.exists())
 			return target.toPath();
 
-		var resource = "imag/bin/" + os.toString() + "/" + filename;
+		var resource = Utils.sanitize("bin/" + os.toString() + "/" + filename);
 
 		try(InputStream stream = Utils.localResource(resource)) {
 			if(stream == null) {
@@ -107,9 +107,7 @@ public enum Binary {
 
 			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-			if(os == LINUX || os == MAC) {
-				target.setExecutable(true);
-			}
+			target.setExecutable(true);
 			return target.toPath();
 		} catch(Exception e) {
 			err("Could not unpack binary " + name().toLowerCase(), e);

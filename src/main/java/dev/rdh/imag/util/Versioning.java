@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.jar.Manifest;
 
 import static dev.rdh.imag.util.Utils.err;
 import static dev.rdh.imag.util.Utils.log;
@@ -27,7 +28,11 @@ public class Versioning {
 
 		private final boolean invalid;
 
-		public Version(@Nullable String version) {
+		public static Version from(@Nullable String version) {
+			return new Version(version);
+		}
+
+		private Version(@Nullable String version) {
 			if(version == null) {
 				invalid = true;
 				major = 0;
@@ -36,11 +41,10 @@ public class Versioning {
 				return;
 			}
 
-			invalid = false;
-
 			String[] parts = version.split("\\.");
 			if(parts.length < 2) {
 				err("Invalid version found: " + version);
+				invalid = true;
 				major = 0;
 				minor = 0;
 				patch = null;
@@ -69,6 +73,8 @@ public class Versioning {
 			} else {
 				patch = parts[1].charAt(1);
 			}
+
+			invalid = false;
 		}
 
 		@Override
@@ -112,7 +118,7 @@ public class Versioning {
 			return;
 		}
 
-		log("Downloading new version: ${online}");
+		log("Downloading Version.from: ${online}");
 		try(InputStream stream = Utils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
 			if(stream == null) throw new IOException("URL not valid");
 
@@ -121,7 +127,7 @@ public class Versioning {
 			log("imag v${online} downloaded to ${f.getAbsolutePath()}");
 			log("Restarting...");
 		} catch (IOException e) {
-			err("Failed to download new version", e);
+			err("Failed to download Version.from", e);
 		}
 	}
 
@@ -130,13 +136,17 @@ public class Versioning {
 	 * @return the local version of imag.
 	 */
 	public static Version getLocalVersion() {
-		try(InputStream resource = Utils.localResource("imag/version.txt")) {
+		try(InputStream resource = Utils.localResource("META-INF/MANIFEST.MF")) {
 			if(resource == null) throw new IOException("Local resource not found");
-			String s = new String(resource.readAllBytes());
-			return new Version(s);
+			Manifest manifest = new Manifest(resource);
+			Object version = manifest.getMainAttributes().get("Implementation-Version");
+			if(version instanceof String s) {
+				return Version.from(s);
+			}
+			throw new IOException("'Implementation-Version' not found");
 		} catch (IOException e) {
-			err("Failed to read version.txt: ${e.getMessage()}");
-			return new Version(null);
+			err("Failed to read version from manifest: ${e.getMessage()}");
+			return Version.from(null);
 		}
 	}
 
@@ -149,10 +159,10 @@ public class Versioning {
 		try(InputStream resource = Utils.onlineResource(getUrl("version.txt"))) {
 			if(resource == null) throw new IOException("URL not valid");
 			String s = new String(resource.readAllBytes());
-			return new Version(s);
+			return Version.from(s);
 		} catch (IOException e) {
 			err("Failed to read online version.txt: ${e.getMessage()}");
-			return new Version(null);
+			return Version.from(null);
 		}
 	}
 
