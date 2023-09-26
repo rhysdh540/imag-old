@@ -40,19 +40,13 @@ public class NbtFileProcessor extends AbstractFileProcessor {
 
 		var name = String.valueOf(file.hashCode());
 
-		var output = tempFile(name);
-
 		addFilesToArgList(file, name);
 
 		var pb = new ProcessBuilder(command)
-				.directory(output.getParentFile())
+				.directory(file.getParentFile())
 				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.redirectOutput(output);
+				.redirectOutput(file);
 
 		pb.start().waitFor();
-
-		if(output.exists() && output.length() < file.length()) {
-			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-		}
 	}
 }

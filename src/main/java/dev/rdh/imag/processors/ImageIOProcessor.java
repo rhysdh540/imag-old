@@ -8,7 +8,7 @@ import java.io.IOException;
 public class ImageIOProcessor extends AbstractFileProcessor {
 	protected ImageIOProcessor() {
 		super("png", false, null, null, null);
-		this.command.clear();
+		this.command.clear(); // we're not using this
 	}
 
 	public static ImageIOProcessor get() {

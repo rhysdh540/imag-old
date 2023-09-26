@@ -27,32 +27,14 @@ public class Processing {
 		if(reencode)
 			processors.add(0, ImageIOProcessor.get());
 
-		//create a temporary file with the contents of the original file
-		var temp = file.getParentFile().toPath().resolve(".imag-" + file.getName()).toFile();
-		try {
-			Files.copy(file.toPath(), temp.toPath());
-		} catch(Exception e) {
-			temp.delete();
-			return e;
-		}
-
 		for(var p : processors) {
 			try {
-				p.process(temp);
+				p.process(file);
 			} catch(Exception e) {
 				return e;
 			}
 		}
 
-		if(temp.length() < file.length()) {
-			try {
-				Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			} catch(Exception e) {
-				return e;
-			}
-		}
-
-		temp.delete();
 		return null;
 	}
 

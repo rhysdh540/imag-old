@@ -56,6 +56,10 @@ public class Utils {
 		log("\033[31;4m${message}\033[0m");
 	}
 
+	public static void err(Throwable t) {
+		err(t.getMessage(), t);
+	}
+
 	/**
 	 * Format a number of a specific unit.
 	 * @param num the number of bytes to format.

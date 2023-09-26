@@ -5,6 +5,8 @@ import dev.rdh.imag.util.Utils;
 import dev.rdh.imag.util.Versioning;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -171,6 +173,8 @@ public class Main {
 		log(s);
 	}
 
+	private static Deque<File> siblingFiles = new ArrayDeque<>();
+
 	/**
 	 * Process a file and run it (or any files inside of it) through the relevant processors.
 	 * @param file the file to process. Guaranteed to not be a directory, to exist, and to end in {@code .png}, {@code .nbt}, or {@code .ogg}.
@@ -182,24 +186,50 @@ public class Main {
 			return;
 		}
 
+		Throwable t = null;
+
 		long preSize = file.length();
 		String name = file.getName().toLowerCase();
 		long startTime = System.currentTimeMillis();
 
-		Throwable t = switch(name.substring(name.lastIndexOf('.'))) {
-			case ".png" -> processImage(file, reencodeIfImage);
-			case ".nbt" -> processNbt(file);
-			case ".ogg" -> processOgg(file);
+		var temp = file.getParentFile().toPath().resolve(".imag-" + file.getName()).toFile();
+
+		try {
+			Files.copy(file.toPath(), temp.toPath());
+		} catch(Exception e) {
+			t = e;
+			if(!temp.delete()) {
+				t = new Exception("Could not delete temp file!", e);
+			}
+		}
+
+		Throwable t2 = switch (name.substring(name.lastIndexOf('.'))) {
+			case ".png" -> processImage(temp, reencodeIfImage);
+			case ".nbt" -> processNbt(temp);
+			case ".ogg" -> processOgg(temp);
 			default -> {
 				err("Unknown file type: " + name.substring(name.lastIndexOf('.')));
 				yield null;
 			}
 		};
+
+		if(t2 != null) {
+			t = new Exception("Error processing ${file.getName()} !", t2);
+		}
+
 		long endTime = System.currentTimeMillis();
 		double timeTaken = (endTime - startTime) / 1e3;
 
+		if(temp.length() < file.length()) {
+			try {
+				Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			} catch(Exception e) {
+				t = new Exception("Could not move temp file!", e);
+			}
+		}
+
 		if(t != null) {
-			err("Error processing ${file.getName()} !", t);
+			err(t);
 		}
 
 		long postSize = file.length();
@@ -212,12 +242,15 @@ public class Main {
 		StringBuilder sb = new StringBuilder("\nProcessed ${file.getName()} in ${timeFromSecs(timeTaken)}\n");
 
 		if (reduction > 0.0) {
-			sb.append("File size decreased: ").append(format(preSize)).append(" -> ").append(plural(postSize, "byte")).append('\n');
-			sb.append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(format(reduction)).append("%)");
+			sb.append("File size decreased: ").append(format(preSize)).append(" -> ").append(plural(postSize, "byte")).append('\n')
+			  .append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(format(reduction)).append("%)");
+		} else if (reduction < 0.0) {
+			sb.append("File size increased! This should not happen!");
 		} else {
 			sb.append("File size not changed");
 		}
-		log(sb.toString());
+
+		log(sb);
 	}
 
 	private static CompletableFuture<?>[] asyncs;
@@ -227,13 +260,14 @@ public class Main {
 
 		Deque<File> filesToProcess = new ArrayDeque<>(files);
 
-		if(doLog) log("\n\033[1;4mRunning pass " + whatPassAmIOn + "...\033[0m");
+		if(doLog) log("\n\033[1;4mRunning pass ${whatPassAmIOn}...\033[0m");
 
 		long prePassSize = size(files);
 
+		boolean reencodeImage = (whatPassAmIOn == 1 || doLog) && encode;
+
 		if(slow) {
 			while(!filesToProcess.isEmpty()) {
-				boolean reencodeImage = (whatPassAmIOn == 1 || doLog) && encode;
 				process(filesToProcess.poll(), reencodeImage);
 			}
 		} else {
@@ -245,7 +279,6 @@ public class Main {
 							file = filesToProcess.poll();
 						}
 						if (file == null) break;
-						boolean reencodeImage = (whatPassAmIOn == 1 || doLog) && encode;
 						process(file, reencodeImage);
 					}
 				});
