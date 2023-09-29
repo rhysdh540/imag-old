@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.jar.Manifest;
 
 import static dev.rdh.imag.util.Utils.err;
 import static dev.rdh.imag.util.Utils.log;
@@ -118,7 +117,7 @@ public class Versioning {
 			return;
 		}
 
-		log("Downloading Version.from: ${online}");
+		log("Downloading version.txt: ${online}");
 		try(InputStream stream = Utils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
 			if(stream == null) throw new IOException("URL not valid");
 
@@ -127,7 +126,7 @@ public class Versioning {
 			log("imag v${online} downloaded to ${f.getAbsolutePath()}");
 			log("Restarting...");
 		} catch (IOException e) {
-			err("Failed to download Version.from", e);
+			err("Failed to download version.txt", e);
 		}
 	}
 
@@ -136,18 +135,16 @@ public class Versioning {
 	 * @return the local version of imag.
 	 */
 	public static Version getLocalVersion() {
-		try(InputStream resource = Utils.localResource("META-INF/MANIFEST.MF")) {
-			if(resource == null) throw new IOException("Local resource not found");
-			Manifest manifest = new Manifest(resource);
-			Object version = manifest.getMainAttributes().get("Implementation-Version");
-			if(version instanceof String s) {
-				return Version.from(s);
-			}
-			throw new IOException("'Implementation-Version' not found");
-		} catch (IOException e) {
-			err("Failed to read version from manifest: ${e.getMessage()}");
+		#if DEV
+		//noinspection ConstantConditions
+		if(true) return Version.from("100.0");
+		#endif
+		String iv = Versioning.class.getPackage().getImplementationVersion();
+		if(iv == null) {
+			err("Could not get local version");
 			return Version.from(null);
 		}
+		return Version.from(iv);
 	}
 
 	/**

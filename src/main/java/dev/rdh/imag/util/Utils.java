@@ -1,5 +1,6 @@
 package dev.rdh.imag.util;
 
+import java.io.IOError;
 import manifold.util.ReflectUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,11 +227,12 @@ public class Utils {
 		return parentPath + File.separator + currentName;
 	}
 
-	public static boolean echo(boolean on) {
+	public static void echo(boolean on) {
 		try {
-			return (boolean) ReflectUtil.method(System.console(), "echo", boolean.class).invoke(on);
-		} catch (Throwable ignore) { // echo throws an ioexception
-			return false;
+			if(System.console() == null) return;
+			ReflectUtil.method(System.console(), "echo", boolean.class).invoke(on);
+		} catch (Throwable e) { // echo throws an ioexception
+			throw new IOError(e);
 		}
 	}
 

@@ -1,6 +1,7 @@
 package dev.rdh.imag;
 
 import dev.rdh.imag.util.Binary;
+import dev.rdh.imag.util.EpicLogger;
 import dev.rdh.imag.util.Utils;
 import dev.rdh.imag.util.Versioning;
 
@@ -41,15 +42,18 @@ public class Main {
 
 	public static final File WORKDIR = makeWorkDir();
 	public static final File MAINDIR = new File(System.getProperty("user.home") + File.separator + ".imag");
+	public static final EpicLogger LOGGER = new EpicLogger("imag")
+			.file(new File(MAINDIR, "logs" + File.separator + "latest.log"))
+			.disableTrace()
+			.disableDebug()
+			.enableInfo()
+			.disableFormat();
 
 	#if DEV
 	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused", "RedundantSuppression"})
 	#endif
 	public static void main(String... args) {
-		System.setProperty("apple.awt.UIElement", "true"); // Don't show the dock icon on macOS
-		Utils.echo(false);
-		log("\033[?25l");
-		initArgs();
+		preMainSetup();
 		#if DEV
 		String a = "/users/rhys/downloads/actual downloads/ntl.png";
 		args = new String[]{a};
@@ -138,7 +142,6 @@ public class Main {
 		}
 
 		run(filesToProcess);
-		log("\033[?25h");
 	}
 
 	/**
@@ -147,6 +150,17 @@ public class Main {
 	 */
 	public static void run(List<File> files) {
 		log("Processing " + plural(files.size(), "file") + " " + plural(passes, "time") + "...");
+		LOGGER.info("imag started on ${files.size()} files\n" +
+					"\tVersion ${Versioning.getLocalVersion()}\n" +
+					"\t${passes} passes, ${threads} threads\n" +
+					"\t" + (png ? "PNG processing enabled\n" : "PNG processing disabled\n") +
+					"\t" + (nbt ? "NBT processing enabled\n" : "NBT processing disabled\n") +
+					"\t" + (ogg ? "OGG processing enabled\n" : "OGG processing disabled\n") +
+					"\t" + (encode ? "Encoding enabled\n" : "Encoding disabled\n") +
+					"\t" + (quiet ? "Quiet mode enabled\n" : "Quiet mode disabled\n") +
+					"\t" + (slow ? "Slow mode enabled\n" : "Slow mode disabled\n") +
+					"\t" + (quitEarly ? "Forced processing enabled\n" : "Forced processing disabled\n")
+		);
 
 		long startTime = System.currentTimeMillis();
 		long preSize = size(files);
@@ -169,11 +183,9 @@ public class Main {
 				"Took " + timeFromSecs(timeTaken) + "\n" +
 				"Saved " + plural(totalSavings, "byte") + " (" + format(percentage) + "% of " + preSize + ") - up to " + format(maxReduction) + "%\n" +
 				"Max reduction: " + plural(maxReductionSize, "byte");
-
 		log(s);
+		LOGGER.info("Exiting...");
 	}
-
-	private static Deque<File> siblingFiles = new ArrayDeque<>();
 
 	/**
 	 * Process a file and run it (or any files inside of it) through the relevant processors.
@@ -186,35 +198,34 @@ public class Main {
 			return;
 		}
 
-		Throwable t = null;
+		LOGGER.info("Processing ${file.getName()}");
 
 		long preSize = file.length();
 		String name = file.getName().toLowerCase();
 		long startTime = System.currentTimeMillis();
 
-		var temp = file.getParentFile().toPath().resolve(".imag-" + file.getName()).toFile();
+		var temp = WORKDIR.toPath().resolve(".imag_temp-" + file.hashCode() + "-" + file.getName()).toFile();
 
 		try {
 			Files.copy(file.toPath(), temp.toPath());
 		} catch(Exception e) {
-			t = e;
-			if(!temp.delete()) {
-				t = new Exception("Could not delete temp file!", e);
-			}
+			LOGGER.warn("Could not copy file ${file.getName()} to temp file", e);
 		}
 
-		Throwable t2 = switch (name.substring(name.lastIndexOf('.'))) {
-			case ".png" -> processImage(temp, reencodeIfImage);
-			case ".nbt" -> processNbt(temp);
-			case ".ogg" -> processOgg(temp);
+		Throwable t = switch (name.substring(
+				name.lastIndexOf('.') + 1
+		)) {
+			case "png" -> processImage(temp, reencodeIfImage);
+			case "nbt" -> processNbt(temp);
+			case "ogg" -> processOgg(temp);
 			default -> {
-				err("Unknown file type: " + name.substring(name.lastIndexOf('.')));
+				LOGGER.error("Unknown file type: " + name.substring(name.lastIndexOf('.')));
 				yield null;
 			}
 		};
 
-		if(t2 != null) {
-			t = new Exception("Error processing ${file.getName()} !", t2);
+		if(t != null) {
+			LOGGER.error("Could not process file ${file.getName()}", t);
 		}
 
 		long endTime = System.currentTimeMillis();
@@ -224,12 +235,8 @@ public class Main {
 			try {
 				Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			} catch(Exception e) {
-				t = new Exception("Could not move temp file!", e);
+				LOGGER.warn("Could not move temp file ${temp.getName()} to ${file.getName()}", e);
 			}
-		}
-
-		if(t != null) {
-			err(t);
 		}
 
 		long postSize = file.length();
@@ -237,6 +244,11 @@ public class Main {
 
 		maxReduction = Math.max(maxReduction, reduction);
 		maxReductionSize = Math.max(maxReductionSize, preSize - postSize);
+
+		LOGGER.info("Processed ${file.getName()} in ${timeFromSecs(timeTaken)}\nSize: ${format(preSize)} -> ${format(postSize)} (${format(reduction)}%)");
+		if(reduction < 0.0) {
+			LOGGER.warn("File size increased while processing ${file.getName()}!");
+		}
 
 		if (quiet) return;
 		StringBuilder sb = new StringBuilder("\nProcessed ${file.getName()} in ${timeFromSecs(timeTaken)}\n");
@@ -257,6 +269,7 @@ public class Main {
 
 	private static boolean pass(List<File> files, int whatPassAmIOn) {
 		boolean doLog = whatPassAmIOn != -1;
+		whatPassAmIOn = doLog ? whatPassAmIOn : 1;
 
 		Deque<File> filesToProcess = new ArrayDeque<>(files);
 
@@ -264,7 +277,11 @@ public class Main {
 
 		long prePassSize = size(files);
 
-		boolean reencodeImage = (whatPassAmIOn == 1 || doLog) && encode;
+		boolean reencodeImage = (whatPassAmIOn == 1) && encode;
+
+		LOGGER.info("Pass ${whatPassAmIOn}\n" +
+					"\tOriginal size: ${format(prePassSize)}\n" +
+					"\tReencode images: ${reencodeImage}\n");
 
 		if(slow) {
 			while(!filesToProcess.isEmpty()) {
@@ -287,7 +304,8 @@ public class Main {
 			try {
 				CompletableFuture.allOf(asyncs).join();
 			} catch (CompletionException e) {
-				err("Processing failed!", e);
+				err("Processing failed! Check log for more info.");
+				LOGGER.fatal("Processing failed!", e);
 			}
 		}
 
@@ -378,5 +396,17 @@ public class Main {
 		}
 		err("Unknown argument: ${name}");
 		return true;
+	}
+
+	private static void preMainSetup() {
+		System.setProperty("apple.awt.UIElement", "true"); // Don't show the dock icon on macOS
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			log("\033[?25h");
+			Utils.echo(true);
+			LOGGER.close();
+		}));
+		Utils.echo(false);
+		log("\033[?25l");
+		initArgs();
 	}
 }
