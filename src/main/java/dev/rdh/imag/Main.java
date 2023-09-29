@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
+import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static dev.rdh.imag.util.Processing.*;
@@ -46,8 +50,7 @@ public class Main {
 			.file(new File(MAINDIR, "logs" + File.separator + "latest.log"))
 			.disableTrace()
 			.disableDebug()
-			.enableInfo()
-			.disableFormat();
+			.enableInfo();
 
 	#if DEV
 	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused", "RedundantSuppression"})
@@ -100,6 +103,8 @@ public class Main {
 					                         
 					  -n, --no-encode        Disable the reencoding of PNGs before processing them.
 					  
+					  -l, --no-log		     Disable logging to the log file.
+					  
 					  -f, --force            Continue to process even if savings are 0.
 					                         
 					  --version              Display the version of imag you are using.
@@ -150,6 +155,7 @@ public class Main {
 	 */
 	public static void run(List<File> files) {
 		log("Processing " + plural(files.size(), "file") + " " + plural(passes, "time") + "...");
+
 		LOGGER.info("imag started on ${files.size()} files\n" +
 					"\tVersion ${Versioning.getLocalVersion()}\n" +
 					"\t${passes} passes, ${threads} threads\n" +
@@ -212,7 +218,7 @@ public class Main {
 			LOGGER.warn("Could not copy file ${file.getName()} to temp file", e);
 		}
 
-		Throwable t = switch (name.substring(
+		Throwable t = switch(name.substring(
 				name.lastIndexOf('.') + 1
 		)) {
 			case "png" -> processImage(temp, reencodeIfImage);
@@ -296,6 +302,7 @@ public class Main {
 							file = filesToProcess.poll();
 						}
 						if (file == null) break;
+						Thread.currentThread().setName("imag-worker-${i}-" + file.getName());
 						process(file, reencodeImage);
 					}
 				});
@@ -386,6 +393,7 @@ public class Main {
 		addArg("--quiet", "-q", () -> quiet = true);
 		addArg("--no-encode", "-n", () -> encode = false);
 		addArg("--force", "-f", () -> quitEarly = false);
+		addArg("--no-log", "-l", LOGGER::disableInfo);
 	}
 
 	private static boolean parseArg(String name, String value) {

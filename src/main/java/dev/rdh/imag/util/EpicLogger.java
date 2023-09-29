@@ -15,7 +15,7 @@ import static dev.rdh.imag.util.EpicLogger.Level.*;
 /**
  * A logger that logs to the console, and optionally a file. This definitely isnt me justifying including manifold
  *
- * @noinspection unused
+ * @noinspection unused, ResultOfMethodCallIgnored
  */
 public class EpicLogger implements ILogger {
 
@@ -29,7 +29,6 @@ public class EpicLogger implements ILogger {
 	private boolean debug = false;
 	private boolean trace = false;
 	private boolean info = false;
-	private boolean format = true;
 
 	private PrintStream file;
 
@@ -193,36 +192,9 @@ public class EpicLogger implements ILogger {
 		return setDebugEnabled(false);
 	}
 
-	public boolean isFormatEnabled() {
-		return format;
-	}
-	public EpicLogger setFormatEnabled(boolean format) {
-		this.format = format;
-		return this;
-	}
-	public EpicLogger enableFormat() {
-		return setFormatEnabled(true);
-	}
-	public EpicLogger disableFormat() {
-		return setFormatEnabled(false);
-	}
 
 	private String getPrefix(Level level) {
-		String result = getFormatting(level) + "[${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
-		if(format) result += "\033[39m";
-		return result;
-	}
-
-	private String getFormatting(Level level) {
-		if(!format) return "";
-		return "\033[" + switch (level) {
-			case DEBUG -> 32;
-			case TRACE -> 93;
-			case INFO -> 39;
-			case WARN -> 33;
-			case ERROR -> 31;
-			case FATAL -> 91;
-		} + "m";
+		return "[${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
 	}
 
 	public void close() {
