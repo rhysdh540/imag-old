@@ -232,6 +232,9 @@ public class Utils {
 			if(System.console() == null) return;
 			ReflectUtil.method(System.console(), "echo", boolean.class).invoke(on);
 		} catch (Throwable e) { // echo throws an ioexception
+			if(e instanceof RuntimeException) {
+				return; //we are probably on the native image
+			}
 			throw new IOError(e);
 		}
 	}

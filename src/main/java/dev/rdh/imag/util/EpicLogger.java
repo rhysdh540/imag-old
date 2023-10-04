@@ -214,8 +214,6 @@ public class EpicLogger implements ILogger {
 				.redirectOutput(Redirect.DISCARD)
 				.directory(file.getParentFile());
 
-		System.out.println(pb.command());
-
 		try {
 			pb.start().waitFor();
 		} catch (Exception ignore) {}

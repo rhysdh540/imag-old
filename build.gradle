@@ -1,12 +1,13 @@
 plugins {
     id 'application'
+    id 'org.graalvm.buildtools.native' version '0.9.27'
 }
 
 setupPreprocessor()
 
 group = 'dev.rdh'
 version = '0.1' + getBuildNumber()
-ext.manifoldVersion = '2023.1.26'
+ext.manifoldVersion = '2023.1.28'
 
 application {
     mainClass = 'dev.rdh.imag.Main'
@@ -56,9 +57,40 @@ jar {
             'Implementation-Title': 'imag',
             'Implementation-Version': project.version.split{'.build-'}[0],
             'Implementation-Vendor-Id': 'dev.rdh',
-            'Implementation-Vendor': 'dev.rdh',
+            'Implementation-Vendor': 'rdh',
     ])
 }
+
+
+graalvmNative {
+    testSupport = false
+
+    binaries.configureEach {
+        resources.autodetect()
+    }
+    toolchainDetection = false
+
+    binaries {
+        main {
+            imageName = 'imag'
+            def args = [
+                    '--verbose', '--no-fallback',
+                    //'-Dgraal.CompilerConfiguration=enterprise',
+                    //'-Dgraal.TuneInlinerExploration=0'
+            ]
+            args.forEach(buildArgs::add)
+            javaLauncher = javaToolchains.launcherFor {
+                languageVersion = JavaLanguageVersion.of(17)
+                vendor = JvmVendorSpec.matching('GraalVM Community')
+            }
+        }
+    }
+
+    agent {
+        //idk man
+    }
+}
+
 
 def manifold(String path) {
     def coords = "systems.manifold:manifold-${path}:${manifoldVersion}"

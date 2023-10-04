@@ -16,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
-import java.util.concurrent.ForkJoinWorkerThread;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static dev.rdh.imag.util.Processing.*;
@@ -295,6 +291,8 @@ public class Main {
 			}
 		} else {
 			for (int i = 0; i < asyncs.length; i++) {
+				@SuppressWarnings("UnnecessaryLocalVariable")
+				int fi = i;
 				asyncs[i] = CompletableFuture.runAsync(() -> {
 					while (true) {
 						File file;
@@ -302,7 +300,7 @@ public class Main {
 							file = filesToProcess.poll();
 						}
 						if (file == null) break;
-						Thread.currentThread().setName("imag-worker-${i}-" + file.getName());
+						Thread.currentThread().setName("imag-worker-${fi}-" + file.getName());
 						process(file, reencodeImage);
 					}
 				});
