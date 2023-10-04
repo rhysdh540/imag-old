@@ -44,6 +44,12 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
 }
 
+nativeRun {
+    jar {
+        exclude 'META-INF/native-image/**'
+    }
+}
+
 jar {
     from {
         configurations.include.collect {
