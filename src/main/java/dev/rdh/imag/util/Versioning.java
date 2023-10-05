@@ -10,8 +10,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
-import static dev.rdh.imag.util.Utils.err;
-import static dev.rdh.imag.util.Utils.log;
+import static dev.rdh.imag.util.StringUtils.err;
+import static dev.rdh.imag.util.StringUtils.log;
 
 /**
  * A class for handling versioning. Includes functions for downloading the latest version of imag from GitHub releases.
@@ -118,7 +118,7 @@ public class Versioning {
 		}
 
 		log("Downloading imag: ${online}");
-		try(InputStream stream = Utils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
+		try(InputStream stream = FileUtils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
 			if(stream == null) throw new IOException("URL not valid or you are offline");
 
 			File f = new File(Main.MAINDIR, "imag.jar");
@@ -154,7 +154,7 @@ public class Versioning {
 	 * @return the latest version of imag.
 	 */
 	public static Version getOnlineVersion() {
-		try(InputStream resource = Utils.onlineResource(getUrl("version.txt"))) {
+		try(InputStream resource = FileUtils.onlineResource(getUrl("version.txt"))) {
 			if(resource == null) throw new IOException("URL not valid");
 			String s = new String(resource.readAllBytes());
 			return Version.from(s);

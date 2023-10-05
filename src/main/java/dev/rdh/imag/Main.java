@@ -1,9 +1,8 @@
 package dev.rdh.imag;
 
-import dev.rdh.imag.processors.ImageIOProcessor;
 import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.EpicLogger;
-import dev.rdh.imag.util.Utils;
+import dev.rdh.imag.util.StringUtils;
 import dev.rdh.imag.util.Versioning;
 
 import java.io.File;
@@ -20,7 +19,8 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
 import static dev.rdh.imag.util.Processing.*;
-import static dev.rdh.imag.util.Utils.*;
+import static dev.rdh.imag.util.StringUtils.*;
+import static dev.rdh.imag.util.FileUtils.*;
 
 public class Main {
 
@@ -55,7 +55,7 @@ public class Main {
 	public static void main(String... args) {
 		preMainSetup();
 		#if DEV
-		String a = "/users/rhys/downloads/apng_file.png";
+		String a = "/Users/rhys/Downloads/actual downloads/test.png";
 		args = new String[]{a};
 		#endif
 
@@ -409,10 +409,10 @@ public class Main {
 		System.setProperty("apple.awt.UIElement", "true"); // Don't show the dock icon on macOS
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			log("\033[?25h");
-			Utils.echo(true);
+			echo(true);
 			LOGGER.close();
 		}));
-		Utils.echo(false);
+		echo(false);
 		log("\033[?25l");
 		initArgs();
 	}

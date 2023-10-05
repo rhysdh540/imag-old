@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static dev.rdh.imag.util.Utils.log;
+import static dev.rdh.imag.util.StringUtils.log;
 
 @SuppressWarnings({"ResultOfMethodCallIgnored", "DuplicatedCode"})
 public abstract class AbstractFileProcessor {

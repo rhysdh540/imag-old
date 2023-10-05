@@ -10,13 +10,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
-import static dev.rdh.imag.util.Utils.err;
+import static dev.rdh.imag.util.StringUtils.err;
 
 @SuppressWarnings({"DataFlowIssue"})
 public class ZopfliPngProcessor extends AbstractFileProcessor {
 
 	private ZopfliPngProcessor() {
-		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 --keepchunks=acTL,fdAT,fcTL -y");
+		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 --keepchunks=acTL,fdAT,fcTL -y"); // keepchunks so apng works
 	}
 
 	public static ZopfliPngProcessor get() {

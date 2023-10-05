@@ -15,7 +15,7 @@ import static dev.rdh.imag.util.EpicLogger.Level.*;
 /**
  * A logger that logs to the console, and optionally a file. This definitely isnt me justifying including manifold
  *
- * @noinspection unused, ResultOfMethodCallIgnored
+ * @noinspection unused, ResultOfMethodCallIgnored, UnusedReturnValue
  */
 public class EpicLogger implements ILogger {
 
@@ -194,7 +194,9 @@ public class EpicLogger implements ILogger {
 
 
 	private String getPrefix(Level level) {
-		return "[${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		String time = sdf.format(new Date());
+		return "[${time}] [${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
 	}
 
 	public void close() {

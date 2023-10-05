@@ -9,7 +9,7 @@ import javax.imageio.ImageIO;
 
 public class ImageIOProcessor extends AbstractFileProcessor {
 	protected ImageIOProcessor() {
-		super("png", false, null, null, null);
+		super("png", false, null, "");
 		this.command.clear(); // we're not using this
 	}
 

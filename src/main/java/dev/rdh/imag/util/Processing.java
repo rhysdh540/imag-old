@@ -4,12 +4,10 @@ import dev.rdh.imag.Main;
 import dev.rdh.imag.processors.*;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static dev.rdh.imag.util.Utils.log;
+import static dev.rdh.imag.util.StringUtils.log;
 
 public class Processing {
 	/**

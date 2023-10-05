@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import static dev.rdh.imag.util.Binary.OS.*;
-import static dev.rdh.imag.util.Utils.err;
+import static dev.rdh.imag.util.StringUtils.err;
 
 /**
  * Enum of all the binaries used by this program.
@@ -95,9 +95,9 @@ public enum Binary {
 		if(target.exists())
 			return target.toPath();
 
-		var resource = Utils.sanitize("bin/" + os.toString() + "/" + filename);
+		var resource = FileUtils.sanitize("bin/" + os.toString() + "/" + filename);
 
-		try(InputStream stream = Utils.localResource(resource)) {
+		try(InputStream stream = FileUtils.localResource(resource)) {
 			if(stream == null) {
 				err("Could not find binary " + name().toLowerCase() + " in classpath");
 				return null;
