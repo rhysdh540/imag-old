@@ -117,9 +117,9 @@ public class Versioning {
 			return;
 		}
 
-		log("Downloading version.txt: ${online}");
+		log("Downloading imag: ${online}");
 		try(InputStream stream = Utils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
-			if(stream == null) throw new IOException("URL not valid");
+			if(stream == null) throw new IOException("URL not valid or you are offline");
 
 			File f = new File(Main.MAINDIR, "imag.jar");
 			Files.copy(stream, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -144,6 +144,7 @@ public class Versioning {
 			err("Could not get local version");
 			return Version.from(null);
 		}
+		iv = String.join("", iv.split("\\[|]|, "));
 		return Version.from(iv);
 	}
 
