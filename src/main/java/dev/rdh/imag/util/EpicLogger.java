@@ -13,10 +13,9 @@ import java.io.PrintStream;
 import static dev.rdh.imag.util.EpicLogger.Level.*;
 
 /**
- * A logger that logs to the console, and optionally a file. This definitely isnt me justifying including manifold
- *
- * @noinspection unused, ResultOfMethodCallIgnored, UnusedReturnValue
+ * A logger that logs to a file. This definitely isnt me justifying including manifold
  */
+@SuppressWarnings({"unused", "ResultOfMethodCallIgnored", "UnusedReturnValue"})
 public class EpicLogger implements ILogger {
 
 	public enum Level {
@@ -205,7 +204,7 @@ public class EpicLogger implements ILogger {
 		}
 	}
 
-	private static void compress(File file) {
+	private void compress(File file) {
 		String date = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date());
 		File newFile = new File(file.getParent() + File.separator + date + ".log");
 		file.renameTo(newFile);
@@ -220,5 +219,19 @@ public class EpicLogger implements ILogger {
 			pb.start().waitFor();
 		} catch (Exception ignore) {}
 		file.delete();
+
+		deleteOldFiles(file.getParentFile());
+	}
+
+	private void deleteOldFiles(File file) {
+		if(file.isFile()) return;
+
+		File[] files = file.listFiles((f) -> f.getName().endsWith(".gz") && System.currentTimeMillis() - f.lastModified() > 2592e6);
+
+		if(files == null) return;
+
+		for(File f : files) {
+			f.delete();
+		}
 	}
 }
