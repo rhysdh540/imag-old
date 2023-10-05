@@ -6,8 +6,7 @@ import dev.rdh.imag.processors.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import static dev.rdh.imag.util.StringUtils.log;
+import java.util.List;
 
 public class Processing {
 	/**
@@ -17,7 +16,7 @@ public class Processing {
 	 * @return an exception if one occurred, otherwise {@code null}.
 	 */
 	public static Throwable processImage(File file, boolean reencode) {
-		var processors = new ArrayList<>(Arrays.asList(
+		List<AbstractFileProcessor> processors = new ArrayList<>(Arrays.asList(
 				OxiPngProcessor.get1(),
 				OxiPngProcessor.get2(),
 				ZopfliPngProcessor.get(),

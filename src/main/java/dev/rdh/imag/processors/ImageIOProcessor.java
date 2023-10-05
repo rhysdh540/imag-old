@@ -1,7 +1,9 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.util.PngUtils;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.IOException;
 
@@ -32,11 +34,17 @@ public class ImageIOProcessor extends AbstractFileProcessor {
 			throw new IOException("Failed to read image");
 		}
 
+		ColorModel originalColorModel = originalImage.getColorModel();
 		BufferedImage reencodedImage = new BufferedImage(
-				originalImage.getWidth(), originalImage.getHeight(),
-				BufferedImage.TYPE_INT_ARGB); // using originalImage.getType() is very buggy and breaks a lot, argb is a safe bet
+				originalColorModel,
+				originalColorModel.createCompatibleWritableRaster(originalImage.getWidth(), originalImage.getHeight()),
+				originalColorModel.isAlphaPremultiplied(),
+				null
+		);
 
-		reencodedImage.createGraphics().drawImage(originalImage, 0, 0, null);
+		Graphics2D g = reencodedImage.createGraphics();
+		g.drawImage(originalImage, 0, 0, null);
+		g.dispose();
 
 		ImageIO.write(reencodedImage, "png", file);
 	}

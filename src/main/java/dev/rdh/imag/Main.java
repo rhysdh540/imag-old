@@ -54,7 +54,7 @@ public class Main {
 	public static void main(String... args) {
 		preMainSetup();
 		#if DEV
-		String a = "/Users/rhys/Downloads/actual downloads/test.png";
+		String a = "/Users/rhys/desktop/a2.png";
 		args = new String[]{a};
 		#endif
 
