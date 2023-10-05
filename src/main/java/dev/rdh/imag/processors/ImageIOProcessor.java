@@ -34,7 +34,7 @@ public class ImageIOProcessor extends AbstractFileProcessor {
 
 		BufferedImage reencodedImage = new BufferedImage(
 				originalImage.getWidth(), originalImage.getHeight(),
-				originalImage.getType());
+				BufferedImage.TYPE_INT_ARGB); // using originalImage.getType() is very buggy and breaks a lot, argb is a safe bet
 
 		reencodedImage.createGraphics().drawImage(originalImage, 0, 0, null);
 

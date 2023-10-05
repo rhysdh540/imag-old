@@ -2,7 +2,6 @@ package dev.rdh.imag;
 
 import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.EpicLogger;
-import dev.rdh.imag.util.StringUtils;
 import dev.rdh.imag.util.Versioning;
 
 import java.io.File;

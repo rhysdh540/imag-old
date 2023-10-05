@@ -32,6 +32,7 @@ public class PngOutProcessor extends AbstractFileProcessor {
 
 		for(int i = 0; i < blockSizes.length; i++) {
 			var command = new ArrayList<>(this.command);
+			command.add(0, binary.path());
 			command.add(1, "-b" + blockSizes[i]);
 			command.add(file.getCanonicalPath());
 
