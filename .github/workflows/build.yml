@@ -6,7 +6,7 @@ jobs:
     if: "!startsWith(github.event.head_commit.message, '[skip]')"
     strategy:
       matrix:
-        java: [ 17 ]
+        java: [ 19.0.2 ]
     runs-on: ubuntu-latest
     steps:
       - name: checkout repository
@@ -16,6 +16,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
+          distribution: zulu
+          cache: gradle
 
       - name: cache gradle
         uses: actions/cache@v2
