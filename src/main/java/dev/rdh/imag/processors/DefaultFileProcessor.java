@@ -1,8 +1,7 @@
 package dev.rdh.imag.processors;
 
-import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.Main;
-
+import dev.rdh.imag.util.Binary;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -10,17 +9,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static dev.rdh.imag.util.StringUtils.log;
-
-@SuppressWarnings({"ResultOfMethodCallIgnored", "DuplicatedCode"})
-public abstract class AbstractFileProcessor {
+@SuppressWarnings({ "ResultOfMethodCallIgnored", "DuplicatedCode" })
+public abstract class DefaultFileProcessor implements FileProcessor {
 
 	protected final List<String> command;
 	protected final String fileType;
 	protected final Binary binary;
 	final boolean front;
 
-	protected AbstractFileProcessor(String fileType, boolean front, Binary binary, String... command) {
+	protected DefaultFileProcessor(String fileType, boolean front, Binary binary, String... command) {
 		this.fileType = fileType;
 		this.front = front;
 		this.binary = binary;
@@ -30,23 +27,20 @@ public abstract class AbstractFileProcessor {
 		this.command = new ArrayList<>(Arrays.asList(strings));
 	}
 
-	public String name() {
-		return binary.name();
-	}
+	@Override
+	public abstract String name();
 
 	protected void addFilesToArgList(File file, String output) throws Exception {
 		this.command.add(0, binary.path());
-		if(front)
-			command.add(1, file.getCanonicalPath());
-		else
-			command.add(file.getCanonicalPath());
+		if(front) command.add(1, file.getCanonicalPath());
+		else command.add(file.getCanonicalPath());
 
 		command.add(output);
 	}
 
+	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType))
-			return;
+		if(!file.getCanonicalPath().endsWith(fileType)) return;
 
 		if(binary.path() == null) { // If the binary is not found, skip processing
 			return;
@@ -58,10 +52,7 @@ public abstract class AbstractFileProcessor {
 
 		addFilesToArgList(file, output.getName());
 
-		var pb = new ProcessBuilder(command)
-				.directory(output.getParentFile())
-				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+		var pb = new ProcessBuilder(command).directory(output.getParentFile()).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 		pb.start().waitFor();
 
@@ -70,14 +61,14 @@ public abstract class AbstractFileProcessor {
 		}
 	}
 
-	protected File tempFile(String name) throws Exception {
+	protected final File tempFile(String name) throws Exception {
 		File result = File.createTempFile(name, '.' + fileType, Main.WORKDIR);
 		result.deleteOnExit();
 		result.delete();
 		return result;
 	}
 
-	protected File tempDir(String name) throws Exception {
+	protected final File tempDir(String name) throws Exception {
 		File result = Files.createTempDirectory(Main.WORKDIR.toPath(), name).toFile();
 		result.deleteOnExit();
 		return result;

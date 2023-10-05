@@ -19,12 +19,13 @@ import static dev.rdh.imag.Main.ogg;
 import static dev.rdh.imag.Main.png;
 
 public class FileUtils {
-	private FileUtils(){}
+	private FileUtils() { }
 
 	/**
 	 * Get all valid files in a directory.
 	 * <p>
 	 * Depending on the program's settings, this will only return files ending in {@code .png}, {@code .nbt}, or {@code .ogg}.
+	 *
 	 * @param dir the directory to get files from.
 	 * @return a Deque of all valid files in the directory.
 	 */
@@ -40,17 +41,16 @@ public class FileUtils {
 		var filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
 
 		//noinspection DataFlowIssue
-		for (var file : dir.listFiles()) {
-			if (file.isDirectory())
-				files.addAll(getFiles(file));
-			else if (file.getName().matches(filter))
-				files.add(file);
+		for(var file : dir.listFiles()) {
+			if(file.isDirectory()) files.addAll(getFiles(file));
+			else if(file.getName().matches(filter)) files.add(file);
 		}
 		return files;
 	}
 
 	/**
 	 * Create a temporary directory for the program to work in.
+	 *
 	 * @return the temporary directory.
 	 */
 	public static File makeWorkDir() {
@@ -67,6 +67,7 @@ public class FileUtils {
 
 	/**
 	 * Get the total size of a collection of files.
+	 *
 	 * @param files the files to get the size of.
 	 * @return the total size of the files, in bytes.
 	 */
@@ -80,6 +81,7 @@ public class FileUtils {
 
 	/**
 	 * Get an input stream from a URL.
+	 *
 	 * @param url the URL to get the input stream from.
 	 * @return the input stream.
 	 */
@@ -93,6 +95,7 @@ public class FileUtils {
 
 	/**
 	 * Get a resource from the classpath.
+	 *
 	 * @param path the path to the resource.
 	 * @return the resource as an input stream.
 	 */
@@ -102,24 +105,23 @@ public class FileUtils {
 
 	/**
 	 * Fix a path name to be correctly capitalized and have the correct path separator.
+	 *
 	 * @param path the path to fix.
 	 * @return the fixed path.
 	 */
 	public static String sanitize(String path) {
-		File file = new File(path.replace('\\', '/')
-								 .replace('/', File.separatorChar));
+		File file = new File(path.replace('\\', '/').replace('/', File.separatorChar));
 
 		return recursiveSanitize(file);
 	}
 
 	private static String recursiveSanitize(File file) {
-		if (file == null)
-			return "";
+		if(file == null) return "";
 
 		String currentName = file.getName();
 		File parentFile = file.getParentFile();
 
-		if (parentFile == null) {
+		if(parentFile == null) {
 			return currentName;
 		}
 
@@ -127,9 +129,9 @@ public class FileUtils {
 
 		File[] matchingFiles = parentFile.listFiles((dir, name) -> name.equalsIgnoreCase(currentName));
 
-		if (matchingFiles != null) {
-			for (File matchingFile : matchingFiles) {
-				if (matchingFile.getName().equalsIgnoreCase(currentName)) {
+		if(matchingFiles != null) {
+			for(File matchingFile : matchingFiles) {
+				if(matchingFile.getName().equalsIgnoreCase(currentName)) {
 					return parentPath + File.separator + matchingFile.getName();
 				}
 			}

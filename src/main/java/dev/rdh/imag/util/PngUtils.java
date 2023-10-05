@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.Optional;
 
 public class PngUtils {
-	private PngUtils(){}
+	private PngUtils() { }
+
 	public static boolean isPNG(File f) {
 		if(f == null || !f.exists()) return false;
 

@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture;
 
 import static dev.rdh.imag.util.StringUtils.err;
 
-@SuppressWarnings({"DuplicatedCode", "DataFlowIssue"})
-public class PngOutProcessor extends AbstractFileProcessor {
+@SuppressWarnings({ "DuplicatedCode", "DataFlowIssue" })
+public class PngOutProcessor extends DefaultFileProcessor {
 
 	private PngOutProcessor() {
-		super("png", true, Binary.PNGOUT,"-q -y -r -k1 -s0");
+		super("png", true, Binary.PNGOUT, "-q -y -r -k1 -s0");
 	}
 
 	public static PngOutProcessor get() {
@@ -23,8 +23,13 @@ public class PngOutProcessor extends AbstractFileProcessor {
 	}
 
 	@Override
+	public String name() {
+		return "PNGOUT";
+	}
+
+	@Override
 	public void process(File file) throws Exception {
-		final int[] blockSizes = {0, 128, 192, 256, 512, 1024, 2048, 4096, 8192};
+		final int[] blockSizes = { 0, 128, 192, 256, 512, 1024, 2048, 4096, 8192 };
 
 		CompletableFuture<?>[] asyncs = new CompletableFuture<?>[blockSizes.length];
 
@@ -36,10 +41,7 @@ public class PngOutProcessor extends AbstractFileProcessor {
 			command.add(1, "-b" + blockSizes[i]);
 			command.add(file.getCanonicalPath());
 
-			var builder = new ProcessBuilder(command)
-					.directory(outputDir)
-					.redirectError(ProcessBuilder.Redirect.DISCARD)
-					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+			var builder = new ProcessBuilder(command).directory(outputDir).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 			asyncs[i] = builder.start().onExit();
 		}
@@ -51,9 +53,7 @@ public class PngOutProcessor extends AbstractFileProcessor {
 			return;
 		}
 
-		var bestResult = Arrays.stream(outputDir.listFiles())
-							   .min(Comparator.comparingLong(File::length))
-							   .orElse(file);
+		var bestResult = Arrays.stream(outputDir.listFiles()).min(Comparator.comparingLong(File::length)).orElse(file);
 
 		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}

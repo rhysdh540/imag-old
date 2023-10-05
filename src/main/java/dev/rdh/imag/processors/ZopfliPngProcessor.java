@@ -1,7 +1,6 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.util.Binary;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -12,23 +11,27 @@ import java.util.concurrent.CompletableFuture;
 
 import static dev.rdh.imag.util.StringUtils.err;
 
-@SuppressWarnings({"DataFlowIssue"})
-public class ZopfliPngProcessor extends AbstractFileProcessor {
+@SuppressWarnings({ "DataFlowIssue" })
+public class ZopfliPngProcessor extends DefaultFileProcessor {
+
+	static final char[] filters = { '0', '1', '2', '3', '4', 'm', 'e', 'p', 'b' };
 
 	private ZopfliPngProcessor() {
-		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 --keepchunks=acTL,fdAT,fcTL -y"); // keepchunks so apng works
+		super("png", false, Binary.ZOPFLIPNG, "--iterations=15 --keepchunks=acTL,fdAT,fcTL -y"); // keepchunks so apng works
 	}
 
 	public static ZopfliPngProcessor get() {
 		return new ZopfliPngProcessor();
 	}
 
-	static final char[] filters = {'0', '1', '2', '3', '4', 'm', 'e', 'p', 'b'};
+	@Override
+	public String name() {
+		return "ZopfliPNG";
+	}
 
 	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType))
-			return;
+		if(!file.getCanonicalPath().endsWith(fileType)) return;
 
 		String binaryPath = binary.path();
 
@@ -46,10 +49,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 			command.add(file.getCanonicalPath());
 			command.add(filters[i] + ".png");
 
-			var builder = new ProcessBuilder(command)
-					.directory(outputDir)
-					.redirectError(ProcessBuilder.Redirect.DISCARD)
-					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+			var builder = new ProcessBuilder(command).directory(outputDir).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 			asyncs[i] = builder.start().onExit();
 		}
@@ -61,9 +61,7 @@ public class ZopfliPngProcessor extends AbstractFileProcessor {
 			return;
 		}
 
-		var bestResult = Arrays.stream(outputDir.listFiles())
-				.min(Comparator.comparingLong(File::length))
-				.orElse(file);
+		var bestResult = Arrays.stream(outputDir.listFiles()).min(Comparator.comparingLong(File::length)).orElse(file);
 
 		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 	}

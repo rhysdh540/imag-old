@@ -1,3 +1,4 @@
+//file:noinspection GroovyAssignabilityCheck
 plugins {
     id 'application'
     id 'org.graalvm.buildtools.native' version '0.9.27'
@@ -26,17 +27,18 @@ repositories {
 }
 
 configurations {
-    include
-    include.extendsFrom(implementation)
+    toInclude
 }
 
 dependencies {
     manifold 'strings'
     manifold 'preprocessor'
-    implementation include("systems.manifold:manifold-util:${manifoldVersion}")
+    include("systems.manifold:manifold-util:${manifoldVersion}")
+    include("com.pngencoder:pngencoder:0.14.0")
     compileOnly 'org.jetbrains:annotations:24.0.0'
 
-    implementation include(fileTree(dir: 'libs', include: ['*.jar']))
+
+    include(fileTree(dir: 'libs', include: ['*.jar']))
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -49,7 +51,7 @@ tasks.withType(JavaCompile).configureEach {
 jar {
     duplicatesStrategy DuplicatesStrategy.WARN
     from {
-        configurations.include.collect {
+        configurations.toInclude.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }
@@ -111,6 +113,12 @@ def manifold(String path) {
     dependencies {
         annotationProcessor coords
         compileOnly coords
+    }
+}
+
+def include(Object path) {
+    dependencies {
+        implementation toInclude(path)
     }
 }
 

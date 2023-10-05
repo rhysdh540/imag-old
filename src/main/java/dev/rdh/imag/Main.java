@@ -3,7 +3,6 @@ package dev.rdh.imag;
 import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.EpicLogger;
 import dev.rdh.imag.util.Versioning;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -17,45 +16,47 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-import static dev.rdh.imag.util.Processing.*;
-import static dev.rdh.imag.util.StringUtils.*;
-import static dev.rdh.imag.util.FileUtils.*;
+import static dev.rdh.imag.util.FileUtils.echo;
+import static dev.rdh.imag.util.FileUtils.getFiles;
+import static dev.rdh.imag.util.FileUtils.makeWorkDir;
+import static dev.rdh.imag.util.FileUtils.sanitize;
+import static dev.rdh.imag.util.FileUtils.size;
+import static dev.rdh.imag.util.Processing.processImage;
+import static dev.rdh.imag.util.Processing.processNbt;
+import static dev.rdh.imag.util.Processing.processOgg;
+import static dev.rdh.imag.util.StringUtils.Pair;
+import static dev.rdh.imag.util.StringUtils.err;
+import static dev.rdh.imag.util.StringUtils.format;
+import static dev.rdh.imag.util.StringUtils.log;
+import static dev.rdh.imag.util.StringUtils.plural;
+import static dev.rdh.imag.util.StringUtils.timeFromSecs;
 
 public class Main {
 
+	public static final File WORKDIR = makeWorkDir();
+	public static final File MAINDIR = new File(System.getProperty("user.home") + File.separator + ".imag");
+	public static final EpicLogger LOGGER = new EpicLogger("imag").file(new File(MAINDIR, "logs" + File.separator + "latest.log")).disableTrace().disableDebug().enableInfo();
+	private static final Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
+	// Settings
+	public static boolean png = true, nbt = true, ogg = true;
 	// Statistics
 	static double maxReduction = 0.0;
 	static long maxReductionSize = 0;
-
-	// Settings
-	public static boolean
-		png = true,
-		nbt = true,
-		ogg = true;
-
 	static boolean quiet = false;
 	static boolean slow = false;
 	static boolean encode = true;
 	static boolean quitEarly = true;
 	static int threads = 8;
 	static int passes = 3;
-
-	public static final File WORKDIR = makeWorkDir();
-	public static final File MAINDIR = new File(System.getProperty("user.home") + File.separator + ".imag");
-	public static final EpicLogger LOGGER = new EpicLogger("imag")
-			.file(new File(MAINDIR, "logs" + File.separator + "latest.log"))
-			.disableTrace()
-			.disableDebug()
-			.enableInfo();
+	private static CompletableFuture<?>[] asyncs;
 
 	#if DEV
-	@SuppressWarnings({"ParameterCanBeLocal", "ConstantValue", "unused", "RedundantSuppression"})
-	#endif
-	public static void main(String... args) {
+	@SuppressWarnings({ "ParameterCanBeLocal", "ConstantValue", "unused", "RedundantSuppression" })
+	#endif public static void main(String... args) {
 		preMainSetup();
 		#if DEV
-		String a = "/Users/rhys/desktop/a2.png";
-		args = new String[]{a};
+		String a = "/Users/rhys/desktop/test.png";
+		args = new String[]{ a };
 		#endif
 
 		if(args.length < 1) {
@@ -79,11 +80,11 @@ public class Main {
 		if(args[0].startsWith("--help") || args[0].startsWith("-h")) {
 			log("""
 					imag: a tool to reduce the size of png, nbt, and ogg files.
-     				
+									
 					Usage: \033[4mimag <input> [options]\033[0m
 					Options:
 					  -p, --passes=<number>  The number of times to run the processors. Default: 3.
-	
+						
 					  --disable=<filetypes>  Disable processing of the specified filetypes (comma-separated).
 					                         Valid filetypes are 'png', 'nbt', and 'ogg'.
 					                         
@@ -104,7 +105,7 @@ public class Main {
 					  -f, --force            Continue to process even if savings are 0.
 					                         
 					  --version              Display the version of imag you are using.
-	
+						
 					  --update               Update imag to the latest version.
 					""");
 			log("\033[?25h");
@@ -121,8 +122,7 @@ public class Main {
 			String arg = split[0];
 			String value = (split.length == 1) ? null : split[1];
 
-			if(parseArg(arg, value))
-				return;
+			if(parseArg(arg, value)) return;
 		}
 		Binary.load();
 
@@ -133,9 +133,7 @@ public class Main {
 			return;
 		}
 
-		List<File> filesToProcess = input.isDirectory() ?
-				getFiles(input)
-				: List.of(input);
+		List<File> filesToProcess = input.isDirectory() ? getFiles(input) : List.of(input);
 
 		if(filesToProcess.isEmpty()) {
 			err("No files found!");
@@ -147,22 +145,13 @@ public class Main {
 
 	/**
 	 * Run the program.
+	 *
 	 * @param files the files to process.
 	 */
 	public static void run(List<File> files) {
 		log("Processing " + plural(files.size(), "file") + " " + plural(passes, "time") + "...");
 
-		LOGGER.info("imag started on ${files.size()} files\n" +
-					"\tVersion ${Versioning.getLocalVersion()}\n" +
-					"\t${passes} passes, ${threads} threads\n" +
-					"\t" + (png ? "PNG processing enabled\n" : "PNG processing disabled\n") +
-					"\t" + (nbt ? "NBT processing enabled\n" : "NBT processing disabled\n") +
-					"\t" + (ogg ? "OGG processing enabled\n" : "OGG processing disabled\n") +
-					"\t" + (encode ? "Encoding enabled\n" : "Encoding disabled\n") +
-					"\t" + (quiet ? "Quiet mode enabled\n" : "Quiet mode disabled\n") +
-					"\t" + (slow ? "Slow mode enabled\n" : "Slow mode disabled\n") +
-					"\t" + (quitEarly ? "Forced processing enabled\n" : "Forced processing disabled\n")
-		);
+		LOGGER.info("imag started on ${files.size()} files\n" + "\tVersion ${Versioning.getLocalVersion()}\n" + "\t${passes} passes, ${threads} threads\n" + "\t" + (png ? "PNG processing enabled\n" : "PNG processing disabled\n") + "\t" + (nbt ? "NBT processing enabled\n" : "NBT processing disabled\n") + "\t" + (ogg ? "OGG processing enabled\n" : "OGG processing disabled\n") + "\t" + (encode ? "Encoding enabled\n" : "Encoding disabled\n") + "\t" + (quiet ? "Quiet mode enabled\n" : "Quiet mode disabled\n") + "\t" + (slow ? "Slow mode enabled\n" : "Slow mode disabled\n") + "\t" + (quitEarly ? "Forced processing enabled\n" : "Forced processing disabled\n"));
 
 		long startTime = System.currentTimeMillis();
 		long preSize = size(files);
@@ -181,16 +170,14 @@ public class Main {
 		double timeTaken = (endTime - startTime) / 1e3;
 		double percentage = ((double) totalSavings / preSize) * 100;
 
-		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" +
-				"Took " + timeFromSecs(timeTaken) + "\n" +
-				"Saved " + plural(totalSavings, "byte") + " (" + format(percentage) + "% of " + preSize + ") - up to " + format(maxReduction) + "%\n" +
-				"Max reduction: " + plural(maxReductionSize, "byte");
+		String s = "\n\033[1;4m" + "Done!" + "\033[0m\n" + "Took " + timeFromSecs(timeTaken) + "\n" + "Saved " + plural(totalSavings, "byte") + " (" + format(percentage) + "% of " + preSize + ") - up to " + format(maxReduction) + "%\n" + "Max reduction: " + plural(maxReductionSize, "byte");
 		log(s);
 		LOGGER.info("Exiting...");
 	}
 
 	/**
 	 * Process a file and run it (or any files inside of it) through the relevant processors.
+	 *
 	 * @param file the file to process. Guaranteed to not be a directory, to exist, and to end in {@code .png}, {@code .nbt}, or {@code .ogg}.
 	 */
 	public static void process(File file, boolean reencodeIfImage) {
@@ -210,13 +197,11 @@ public class Main {
 
 		try {
 			Files.copy(file.toPath(), temp.toPath());
-		} catch(Exception e) {
+		} catch (Exception e) {
 			LOGGER.warn("Could not copy file ${file.getName()} to temp file", e);
 		}
 
-		Throwable t = switch(name.substring(
-				name.lastIndexOf('.') + 1
-		)) {
+		Throwable t = switch(name.substring(name.lastIndexOf('.') + 1)) {
 			case "png" -> processImage(temp, reencodeIfImage);
 			case "nbt" -> processNbt(temp);
 			case "ogg" -> processOgg(temp);
@@ -236,7 +221,7 @@ public class Main {
 		if(temp.length() < file.length()) {
 			try {
 				Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			} catch(Exception e) {
+			} catch (Exception e) {
 				LOGGER.warn("Could not move temp file ${temp.getName()} to ${file.getName()}", e);
 			}
 		}
@@ -252,13 +237,12 @@ public class Main {
 			LOGGER.warn("File size increased while processing ${file.getName()}!");
 		}
 
-		if (quiet) return;
+		if(quiet) return;
 		StringBuilder sb = new StringBuilder("\nProcessed ${file.getName()} in ${timeFromSecs(timeTaken)}\n");
 
-		if (reduction > 0.0) {
-			sb.append("File size decreased: ").append(format(preSize)).append(" -> ").append(plural(postSize, "byte")).append('\n')
-			  .append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(format(reduction)).append("%)");
-		} else if (reduction < 0.0) {
+		if(reduction > 0.0) {
+			sb.append("File size decreased: ").append(format(preSize)).append(" -> ").append(plural(postSize, "byte")).append('\n').append("Savings of ").append(plural(preSize - postSize, "byte")).append(" (").append(format(reduction)).append("%)");
+		} else if(reduction < 0.0) {
 			sb.append("File size increased! This should not happen!");
 		} else {
 			sb.append("File size not changed");
@@ -266,8 +250,6 @@ public class Main {
 
 		log(sb);
 	}
-
-	private static CompletableFuture<?>[] asyncs;
 
 	private static boolean pass(List<File> files, int whatPassAmIOn) {
 		boolean doLog = whatPassAmIOn != -1;
@@ -281,26 +263,26 @@ public class Main {
 
 		boolean reencodeImage = (whatPassAmIOn == 1) && encode;
 
-		LOGGER.info("Pass ${whatPassAmIOn}\n" +
-					"\tOriginal size: ${format(prePassSize)}\n" +
-					"\tReencode images: ${reencodeImage}\n");
+		//noinspection TextBlockMigration
+		LOGGER.info("Pass ${whatPassAmIOn}\n"
+					+ "\tOriginal size: ${format(prePassSize)}\n"
+					+ "\tReencode images: ${reencodeImage}\n");
 
 		if(slow) {
 			while(!filesToProcess.isEmpty()) {
 				process(filesToProcess.poll(), reencodeImage);
 			}
 		} else {
-			for (int i = 0; i < asyncs.length; i++) {
-				@SuppressWarnings("UnnecessaryLocalVariable")
+			for(int i = 0; i < asyncs.length; i++) {
 				int fi = i;
 				asyncs[i] = CompletableFuture.runAsync(() -> {
-					while (true) {
+					while(true) {
 						File file;
-						synchronized (filesToProcess) {
+						synchronized(filesToProcess) {
 							file = filesToProcess.poll();
 						}
-						if (file == null) break;
-						Thread.currentThread().setName("imag-worker-${fi}-" + file.getName());
+						if(file == null) break;
+						Thread.currentThread().setName("imag-worker-" + fi);
 						process(file, reencodeImage);
 					}
 				});
@@ -327,8 +309,6 @@ public class Main {
 		return false;
 	}
 
-	private static final Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
-
 	private static void addArg(String longName, String shortName, Function<String, Boolean> action) {
 		args.put(Pair.of(longName, shortName), action);
 	}
@@ -349,7 +329,7 @@ public class Main {
 					return true;
 				}
 				Main.passes = passes;
-			} catch(NumberFormatException e) {
+			} catch (NumberFormatException e) {
 				err("Invalid number of passes: ${value}");
 				return true;
 			}
@@ -380,7 +360,7 @@ public class Main {
 					return true;
 				}
 				Main.threads = threads;
-			} catch(NumberFormatException e) {
+			} catch (NumberFormatException e) {
 				err("Invalid number of threads: ${value}");
 				return true;
 			}

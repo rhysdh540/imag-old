@@ -1,12 +1,11 @@
 package dev.rdh.imag.processors;
 
 import dev.rdh.imag.util.Binary;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
-public class OptiVorbisProcessor extends AbstractFileProcessor {
+public class OptiVorbisProcessor extends DefaultFileProcessor {
 
 	public OptiVorbisProcessor() {
 		super("ogg", false, Binary.OPTIVORBIS, "-q -r ogg2ogg");
@@ -14,6 +13,11 @@ public class OptiVorbisProcessor extends AbstractFileProcessor {
 
 	public static OptiVorbisProcessor get() {
 		return new OptiVorbisProcessor();
+	}
+
+	@Override
+	public String name() {
+		return "OptiVorbis";
 	}
 
 	@Override
