@@ -1,5 +1,6 @@
 package dev.rdh.imag;
 
+import dev.rdh.imag.processors.ImageIOProcessor;
 import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.EpicLogger;
 import dev.rdh.imag.util.Utils;
@@ -54,7 +55,7 @@ public class Main {
 	public static void main(String... args) {
 		preMainSetup();
 		#if DEV
-		String a = "/users/rhys/downloads/actual downloads/ntl.png";
+		String a = "/users/rhys/downloads/apng_file.png";
 		args = new String[]{a};
 		#endif
 

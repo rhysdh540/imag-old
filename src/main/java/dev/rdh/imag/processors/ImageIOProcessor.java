@@ -1,9 +1,11 @@
 package dev.rdh.imag.processors;
 
-import javax.imageio.ImageIO;
+import dev.rdh.imag.util.PngUtils;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 public class ImageIOProcessor extends AbstractFileProcessor {
 	protected ImageIOProcessor() {
@@ -16,11 +18,14 @@ public class ImageIOProcessor extends AbstractFileProcessor {
 	}
 
 	@Override
-	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType))
-			return;
+	public String name() {
+		return "ImageIO";
+	}
 
-		// Read the original PNG image
+	@Override
+	public void process(File file) throws Exception {
+		if(!PngUtils.isPNG(file) || PngUtils.isAnimated(file)) return;
+
 		BufferedImage originalImage = ImageIO.read(file);
 
 		if (originalImage == null) {
@@ -29,7 +34,7 @@ public class ImageIOProcessor extends AbstractFileProcessor {
 
 		BufferedImage reencodedImage = new BufferedImage(
 				originalImage.getWidth(), originalImage.getHeight(),
-				BufferedImage.TYPE_INT_ARGB);
+				originalImage.getType());
 
 		reencodedImage.createGraphics().drawImage(originalImage, 0, 0, null);
 

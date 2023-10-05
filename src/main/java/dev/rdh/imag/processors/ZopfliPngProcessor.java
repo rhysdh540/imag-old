@@ -16,7 +16,7 @@ import static dev.rdh.imag.util.Utils.err;
 public class ZopfliPngProcessor extends AbstractFileProcessor {
 
 	private ZopfliPngProcessor() {
-		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 -y");
+		super("png", false, Binary.ZOPFLIPNG,"--iterations=15 --keepchunks=acTL,fdAT,fcTL -y");
 	}
 
 	public static ZopfliPngProcessor get() {

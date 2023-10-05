@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static dev.rdh.imag.util.Utils.log;
+
 @SuppressWarnings({"ResultOfMethodCallIgnored", "DuplicatedCode"})
 public abstract class AbstractFileProcessor {
 
@@ -26,6 +28,10 @@ public abstract class AbstractFileProcessor {
 		var strings = String.join(" ", command).split(" ");
 
 		this.command = new ArrayList<>(Arrays.asList(strings));
+	}
+
+	public String name() {
+		return binary.name();
 	}
 
 	protected void addFilesToArgList(File file, String output) throws Exception {

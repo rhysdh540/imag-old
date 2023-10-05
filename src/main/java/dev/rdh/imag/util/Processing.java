@@ -1,5 +1,6 @@
 package dev.rdh.imag.util;
 
+import dev.rdh.imag.Main;
 import dev.rdh.imag.processors.*;
 
 import java.io.File;
@@ -7,6 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import static dev.rdh.imag.util.Utils.log;
 
 public class Processing {
 	/**
@@ -29,7 +32,10 @@ public class Processing {
 
 		for(var p : processors) {
 			try {
+				long pre = file.length();
 				p.process(file);
+				long post = file.length();
+				Main.LOGGER.info("${p.name()} (${file.getName()}): ${post-pre}");
 			} catch(Exception e) {
 				return e;
 			}

@@ -22,6 +22,7 @@ static String getBuildNumber() {
 repositories {
     mavenLocal()
     mavenCentral()
+    flatDir { dirs 'libs' }
 }
 
 configurations {
@@ -32,9 +33,10 @@ configurations {
 dependencies {
     manifold 'strings'
     manifold 'preprocessor'
-    include "systems.manifold:manifold-util:${manifoldVersion}"
-    runtimeOnly "systems.manifold:manifold-util:${manifoldVersion}"
+    implementation include("systems.manifold:manifold-util:${manifoldVersion}")
     compileOnly 'org.jetbrains:annotations:24.0.0'
+
+    implementation include(fileTree(dir: 'libs', include: ['*.jar']))
 }
 
 tasks.withType(JavaCompile).configureEach {
@@ -44,29 +46,35 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
 }
 
-nativeRun {
-    jar {
-        exclude 'META-INF/native-image/**'
-    }
-}
-
 jar {
+    duplicatesStrategy DuplicatesStrategy.WARN
     from {
         configurations.include.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }
     exclude 'META-INF/maven/**'
+    exclude 'META-INF/native-image/**'
 
     manifest.attributes([
-            'Main-Class': 'dev.rdh.imag.Main',
-            'Implementation-Title': 'imag',
-            'Implementation-Version': project.version.split{'.build-'}[0],
+            'Main-Class'              : 'dev.rdh.imag.Main',
+            'Implementation-Title'    : 'imag',
+            'Implementation-Version'  : project.version.split { '.build-' }[0],
             'Implementation-Vendor-Id': 'dev.rdh',
-            'Implementation-Vendor': 'rdh',
+            'Implementation-Vendor'   : 'rdh',
     ])
 }
 
+tasks.register('nativeJar', Jar) {
+    with jar
+    archiveClassifier.set('native')
+    from jar
+    include 'META-INF/native-image/**'
+}
+
+run {
+    outputs.upToDateWhen{false}
+}
 
 graalvmNative {
     testSupport = false
