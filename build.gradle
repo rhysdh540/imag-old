@@ -33,7 +33,7 @@ configurations {
 dependencies {
     manifold 'strings'
     manifold 'preprocessor'
-    include("systems.manifold:manifold-util:${manifoldVersion}")
+    include(manifold('util'))
     include("com.pngencoder:pngencoder:0.14.0")
     compileOnly 'org.jetbrains:annotations:24.0.0'
 
@@ -51,8 +51,8 @@ tasks.withType(JavaCompile).configureEach {
 jar {
     duplicatesStrategy DuplicatesStrategy.WARN
     from {
-        configurations.toInclude.collect {
-            it.isDirectory() ? it : zipTree(it)
+        configurations.toInclude.collect { File f ->
+            f.isDirectory() ? f : zipTree(f)
         }
     }
     exclude 'META-INF/maven/**'
@@ -111,9 +111,9 @@ graalvmNative {
 def manifold(String path) {
     def coords = "systems.manifold:manifold-${path}:${manifoldVersion}"
     dependencies {
-        annotationProcessor coords
-        compileOnly coords
+        annotationProcessor compileOnly(coords)
     }
+    return coords
 }
 
 def include(Object path) {
