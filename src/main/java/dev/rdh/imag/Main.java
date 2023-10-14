@@ -35,7 +35,12 @@ public class Main {
 
 	public static final File WORKDIR = makeWorkDir();
 	public static final File MAINDIR = new File(System.getProperty("user.home") + File.separator + ".imag");
-	public static final EpicLogger LOGGER = new EpicLogger("imag").file(new File(MAINDIR, "logs" + File.separator + "latest.log")).disableTrace().disableDebug().enableInfo();
+
+	public static final EpicLogger LOGGER = new EpicLogger("imag")
+			.disableTrace()
+			.disableDebug()
+			.enableInfo();
+
 	private static final Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
 	// Settings
 	public static boolean png = true, nbt = true, ogg = true;
@@ -124,6 +129,9 @@ public class Main {
 
 			if(parseArg(arg, value)) return;
 		}
+
+		LOGGER.file(new File(MAINDIR, "logs" + File.separator + "latest.log"));
+
 		Binary.load();
 
 		File input = new File(sanitize(path));

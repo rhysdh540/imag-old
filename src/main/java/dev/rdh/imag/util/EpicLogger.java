@@ -38,6 +38,7 @@ public class EpicLogger implements ILogger {
 			if(logFile.isDirectory()) {
 				logFile.delete();
 			} else {
+				System.out.println("compressing");
 				compress(logFile);
 			}
 		}
@@ -212,11 +213,14 @@ public class EpicLogger implements ILogger {
 		file.renameTo(newFile);
 		file = newFile;
 
-		var pb = new ProcessBuilder(Binary.ZOPFLI.path(), "--gzip", "--i1000", file.getAbsolutePath()).redirectError(Redirect.DISCARD).redirectOutput(Redirect.DISCARD).directory(file.getParentFile());
+		var pb = new ProcessBuilder(Binary.ZOPFLI.path(), "--gzip", "--i1000", file.getAbsolutePath())
+				.redirectError(Redirect.DISCARD)
+				.redirectOutput(Redirect.DISCARD)
+				.directory(file.getParentFile());
 
 		try {
 			pb.start().waitFor();
-		} catch (Exception ignore) { }
+		} catch (Exception ignore) {}
 		file.delete();
 
 		deleteOldFiles(file.getParentFile());
@@ -225,7 +229,7 @@ public class EpicLogger implements ILogger {
 	private void deleteOldFiles(File file) {
 		if(file.isFile()) return;
 
-		File[] files = file.listFiles((f) -> f.getName().endsWith(".gz") && System.currentTimeMillis() - f.lastModified() > 2592e6);
+		File[] files = file.listFiles((f) -> f.getName().endsWith(".gz") && System.currentTimeMillis() - f.lastModified() > 2.592E9);
 
 		if(files == null) return;
 

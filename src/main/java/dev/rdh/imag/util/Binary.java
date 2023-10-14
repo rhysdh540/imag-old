@@ -7,10 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-import static dev.rdh.imag.util.Binary.OS.LINUX;
-import static dev.rdh.imag.util.Binary.OS.MAC;
-import static dev.rdh.imag.util.Binary.OS.WINDOWS;
-import static dev.rdh.imag.util.StringUtils.err;
+import static dev.rdh.imag.util.Binary.OS.*;
+import static dev.rdh.imag.util.Binary.Arch.*;
 
 /**
  * Enum of all the binaries used by this program.
@@ -20,38 +18,67 @@ public enum Binary {
 
 	;
 
-	private static OS os;
-	private static File binariesDir;
 	private final Path path;
+	private final boolean isOSInstalled;
+
+	private static final OS os;
+	private static final File binariesDir;
+	private static final Arch arch;
 
 	Binary() {
-		makeStuff();
-		this.path = unpack();
-	}
-
-	/**
-	 * Sets the OS and binaries directory.
-	 */
-	private static void makeStuff() {
-		if(os == null) {
-			String a = System.getProperty("os.name").toLowerCase();
-			if(a.contains("win")) {
-				os = WINDOWS;
-			} else if(a.contains("mac")) {
-				os = MAC;
-			} else {
-				os = LINUX;
-			}
+		boolean temp;
+		try {
+			temp = isPreInstalled(name().toLowerCase());
+		} catch (Exception e) {
+			Main.LOGGER.error("Could not check if binary " + this + " is pre-installed", e);
+			temp = false;
 		}
-		if(binariesDir == null) {
-			binariesDir = new File(Main.MAINDIR, "bin");
+		isOSInstalled = temp;
+		if(isOSInstalled) {
+			path = null;
+			return;
+		}
+
+		path = unpack();
+		if(path != null) {
+			Main.LOGGER.info("Found binary " + this + " at " + path());
+		} else {
+			Main.LOGGER.error("Could not find binary " + this);
 		}
 	}
 
-	public static void load() { }
+	static {
+		String a = System.getProperty("os.name").toLowerCase();
+		if(a.contains("win")) {
+			os = WINDOWS;
+		} else if(a.contains("mac")) {
+			os = MAC;
+		} else {
+			os = OS.OTHER;
+		}
+
+		binariesDir = new File(Main.MAINDIR, "bin");
+
+		String b = System.getProperty("os.arch").toLowerCase();
+		if(b.contains("arm64")) {
+			arch = ARM64;
+		} else if(b.contains("x64") || b.contains("amd64") || b.contains("x86_64")) {
+			arch = X64;
+		} else {
+			arch = Arch.OTHER;
+		}
+	}
+
+	public static void load() {
+		if(os == OS.OTHER) {
+			Main.LOGGER.warn("Unsupported OS: " + System.getProperty("os.name"));
+		}
+	}
 
 	public String path() {
-		return path == null ? null : path.toFile().getAbsolutePath();
+		return isOSInstalled ? toString()
+							 : path == null ? null
+							 : path.toAbsolutePath().toString();
 	}
 
 	@Override
@@ -63,7 +90,7 @@ public enum Binary {
 	 * Unpacks the binary from the jar to the binaries directory. If the binary already exists, it will not be unpacked.
 	 * <p>This is required because the filesystem cannot execute commands that are inside zipped files (like jars). So, we have to take it and move it somewhere else and then run it from there.</p>
 	 *
-	 * @return The path to the binary.
+	 * @return The path to the binary, or null if it does not exist.
 	 */
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	private Path unpack() {
@@ -74,11 +101,15 @@ public enum Binary {
 
 		if(target.exists()) return target.toPath();
 
-		var resource = FileUtils.sanitize("bin/" + os.toString() + "/" + filename);
+		if(os == OS.OTHER) {
+			return null;
+		}
+
+		String resource = FileUtils.sanitize("bin/" + arch + "/" + filename);
 
 		try(InputStream stream = FileUtils.localResource(resource)) {
 			if(stream == null) {
-				err("Could not find binary " + name().toLowerCase() + " in classpath");
+				Main.LOGGER.warn("Could not find binary " + name().toLowerCase() + " in classpath");
 				return null;
 			}
 
@@ -89,21 +120,39 @@ public enum Binary {
 			target.setExecutable(true);
 			return target.toPath();
 		} catch (Exception e) {
-			err("Could not unpack binary " + name().toLowerCase(), e);
+			Main.LOGGER.error("Could not unpack binary " + name().toLowerCase(), e);
 			return null;
 		}
 	}
 
+	private boolean isPreInstalled(String cmd) throws Exception {
+		String which = os == WINDOWS ? "where" : "which";
+		ProcessBuilder pb = new ProcessBuilder(which, cmd)
+				.redirectError(ProcessBuilder.Redirect.DISCARD);
+		Process p = pb.start();
+		p.waitFor();
+		return p.exitValue() == 0;
+	}
+
 	enum OS {
-		MAC, WINDOWS, LINUX;
+		MAC, WINDOWS, OTHER;
 
 		@Override
 		public String toString() {
 			return switch(this) {
 				case MAC -> "mac";
 				case WINDOWS -> "win";
-				case LINUX -> "nix";
+				default -> "other";
 			};
+		}
+	}
+
+	enum Arch {
+		ARM64, X64, OTHER;
+
+		@Override
+		public String toString() {
+			return name().toLowerCase();
 		}
 	}
 }
