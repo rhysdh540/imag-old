@@ -36,7 +36,6 @@ dependencies {
     include("com.pngencoder:pngencoder:0.14.0")
     compileOnly 'org.jetbrains:annotations:24.0.0'
 
-
     include(fileTree(dir: 'libs', include: ['*.jar']))
 }
 
