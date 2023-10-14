@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import static dev.rdh.imag.util.Binary.OS.*;
-import static dev.rdh.imag.util.Binary.Arch.*;
 
 /**
  * Enum of all the binaries used by this program.
@@ -23,7 +22,6 @@ public enum Binary {
 
 	private static final OS os;
 	private static final File binariesDir;
-	private static final Arch arch;
 
 	Binary() {
 		boolean temp;
@@ -58,15 +56,6 @@ public enum Binary {
 		}
 
 		binariesDir = new File(Main.MAINDIR, "bin");
-
-		String b = System.getProperty("os.arch").toLowerCase();
-		if(b.contains("arm64")) {
-			arch = ARM64;
-		} else if(b.contains("x64") || b.contains("amd64") || b.contains("x86_64")) {
-			arch = X64;
-		} else {
-			arch = Arch.OTHER;
-		}
 	}
 
 	public static void load() {
@@ -105,22 +94,21 @@ public enum Binary {
 			return null;
 		}
 
-		String resource = FileUtils.sanitize("bin/" + arch + "/" + filename);
+		String resource = "bin" + File.separator + filename;
 
-		try(InputStream stream = FileUtils.localResource(resource)) {
+		try {
+			InputStream stream = FileUtils.localResource(resource);
 			if(stream == null) {
-				Main.LOGGER.warn("Could not find binary " + name().toLowerCase() + " in classpath");
+				Main.LOGGER.warn("Could not find binary " + this + " in jar");
 				return null;
 			}
 
 			binariesDir.mkdirs();
-
 			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
 			target.setExecutable(true);
 			return target.toPath();
 		} catch (Exception e) {
-			Main.LOGGER.error("Could not unpack binary " + name().toLowerCase(), e);
+			Main.LOGGER.error("Could not unpack binary " + this, e);
 			return null;
 		}
 	}
@@ -144,15 +132,6 @@ public enum Binary {
 				case WINDOWS -> "win";
 				default -> "other";
 			};
-		}
-	}
-
-	enum Arch {
-		ARM64, X64, OTHER;
-
-		@Override
-		public String toString() {
-			return name().toLowerCase();
 		}
 	}
 }
