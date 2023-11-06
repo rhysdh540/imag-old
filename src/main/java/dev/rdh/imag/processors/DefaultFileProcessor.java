@@ -13,12 +13,10 @@ import java.util.List;
 public abstract class DefaultFileProcessor implements FileProcessor {
 
 	protected final List<String> command;
-	protected final String fileType;
 	protected final Binary binary;
 	final boolean front;
 
-	protected DefaultFileProcessor(String fileType, boolean front, Binary binary, String... command) {
-		this.fileType = fileType;
+	protected DefaultFileProcessor(boolean front, Binary binary, String... command) {
 		this.front = front;
 		this.binary = binary;
 
@@ -30,6 +28,8 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 	@Override
 	public abstract String name();
 
+	public abstract String fileType();
+
 	protected void addFilesToArgList(File file, String output) throws Exception {
 		this.command.add(0, binary.path());
 		if(front) command.add(1, file.getCanonicalPath());
@@ -40,19 +40,19 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 
 	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType)) return;
+		if(!file.getCanonicalPath().endsWith(fileType())) return;
 
 		if(binary.path() == null) { // If the binary is not found, skip processing
 			return;
 		}
 
-		var name = String.valueOf(file.hashCode());
+		String name = String.valueOf(file.hashCode());
 
-		var output = tempFile(name);
+		File output = tempFile(name);
 
 		addFilesToArgList(file, output.getName());
 
-		var pb = new ProcessBuilder(command).directory(output.getParentFile()).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
+		ProcessBuilder pb = new ProcessBuilder(command).directory(output.getParentFile()).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 		pb.start().waitFor();
 
@@ -62,7 +62,7 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 	}
 
 	protected final File tempFile(String name) throws Exception {
-		File result = File.createTempFile(name, '.' + fileType, Main.WORKDIR);
+		File result = File.createTempFile(name, '.' + fileType(), Main.WORKDIR);
 		result.deleteOnExit();
 		result.delete();
 		return result;

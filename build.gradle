@@ -7,7 +7,7 @@ setupPreprocessor()
 
 group = 'dev.rdh'
 version = '0.1' + getBuildNumber()
-ext.manifoldVersion = '2023.1.28'
+ext.manifoldVersion = '2023.1.29'
 
 application {
     mainClass = 'dev.rdh.imag.Main'

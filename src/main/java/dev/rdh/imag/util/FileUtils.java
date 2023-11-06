@@ -1,5 +1,6 @@
 package dev.rdh.imag.util;
 
+import dev.rdh.imag.Options;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -14,10 +15,6 @@ import manifold.util.ReflectUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static dev.rdh.imag.Main.nbt;
-import static dev.rdh.imag.Main.ogg;
-import static dev.rdh.imag.Main.png;
-
 public class FileUtils {
 	private FileUtils() { }
 
@@ -29,20 +26,24 @@ public class FileUtils {
 	 * @param dir the directory to get files from.
 	 * @return a Deque of all valid files in the directory.
 	 */
-	public static List<File> getFiles(@NotNull File dir) {
-		var files = new ArrayList<File>();
+	public static List<File> getFiles(@NotNull File dir, Options opts) {
+		List<File> files = new ArrayList<>();
 
-		var extensions = new ArrayList<String>();
-		if(png) extensions.add("png");
-		if(nbt) extensions.add("nbt");
-		if(ogg) extensions.add("ogg");
+		List<String> extensions = new ArrayList<>();
+		if(opts.png) extensions.add("png");
+		if(opts.nbt) extensions.add("nbt");
+		if(opts.ogg) extensions.add("ogg");
+		if(opts.archives) {
+			extensions.add("zip");
+			extensions.add("gz");
+		}
 
 		@SuppressWarnings("all")  // regex + string concat = ???
-		var filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
+		String filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
 
 		//noinspection DataFlowIssue
-		for(var file : dir.listFiles()) {
-			if(file.isDirectory()) files.addAll(getFiles(file));
+		for(File file : dir.listFiles()) {
+			if(file.isDirectory()) files.addAll(getFiles(file, opts));
 			else if(file.getName().matches(filter)) files.add(file);
 		}
 		return files;
@@ -72,7 +73,7 @@ public class FileUtils {
 	 * @return the total size of the files, in bytes.
 	 */
 	public static long size(@NotNull Collection<File> files) {
-		long sum = 0L;
+		long sum = 0;
 		for(File file : files) {
 			sum += file.length();
 		}

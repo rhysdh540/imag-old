@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static dev.rdh.imag.util.FileUtils.echo;
@@ -41,18 +43,11 @@ public class Main {
 			.disableDebug()
 			.enableInfo();
 
-	private static final Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
-	// Settings
-	public static boolean png = true, nbt = true, ogg = true;
-	// Statistics
+	private static final Map<Pair<String, String>, BiFunction<Options, String, Boolean>> args = new HashMap<>();
+
+	static final Options options = new Options();
 	static double maxReduction = 0.0;
 	static long maxReductionSize = 0;
-	static boolean quiet = false;
-	static boolean slow = false;
-	static boolean encode = true;
-	static boolean quitEarly = true;
-	static int threads = 8;
-	static int passes = 3;
 	private static CompletableFuture<?>[] asyncs;
 
 	#if DEV
@@ -86,7 +81,7 @@ public class Main {
 			log("""
 					imag: a tool to reduce the size of png, nbt, and ogg files.
 									
-					Usage: \033[4mimag <input> [options]\033[0m
+					Usage: \033[4mimag [options] <input>\033[0m
 					Options:
 					  -p, --passes=<number>  The number of times to run the processors. Default: 3.
 						
@@ -105,7 +100,7 @@ public class Main {
 					                         
 					  -n, --no-encode        Disable the reencoding of PNGs before processing them.
 					  
-					  -l, --no-log		     Disable logging to the log file.
+					  -l, --no-log           Disable logging to the log file.
 					  
 					  -f, --force            Continue to process even if savings are 0.
 					                         
@@ -117,9 +112,9 @@ public class Main {
 			return;
 		}
 
-		String path = args[0];
+		String path = args[args.length - 1];
 
-		args = Arrays.copyOfRange(args, 1, args.length);
+		args = Arrays.copyOf(args, args.length - 1);
 
 		for(String input : args) {
 			String[] split = input.split("=", 2);
@@ -127,7 +122,7 @@ public class Main {
 			String arg = split[0];
 			String value = (split.length == 1) ? null : split[1];
 
-			if(parseArg(arg, value)) return;
+			if(parseArg(options, arg, value)) return;
 		}
 
 		LOGGER.file(new File(MAINDIR, "logs" + File.separator + "latest.log"));
@@ -141,7 +136,7 @@ public class Main {
 			return;
 		}
 
-		List<File> filesToProcess = input.isDirectory() ? getFiles(input) : List.of(input);
+		List<File> filesToProcess = input.isDirectory() ? getFiles(input, options) : List.of(input);
 
 		if(filesToProcess.isEmpty()) {
 			err("No files found!");
@@ -157,17 +152,27 @@ public class Main {
 	 * @param files the files to process.
 	 */
 	public static void run(List<File> files) {
-		log("Processing " + plural(files.size(), "file") + " " + plural(passes, "time") + "...");
+		log("Processing " + plural(files.size(), "file") + " " + plural(options.passes, "time") + "...");
 
-		LOGGER.info("imag started on ${files.size()} files\n" + "\tVersion ${Versioning.getLocalVersion()}\n" + "\t${passes} passes, ${threads} threads\n" + "\t" + (png ? "PNG processing enabled\n" : "PNG processing disabled\n") + "\t" + (nbt ? "NBT processing enabled\n" : "NBT processing disabled\n") + "\t" + (ogg ? "OGG processing enabled\n" : "OGG processing disabled\n") + "\t" + (encode ? "Encoding enabled\n" : "Encoding disabled\n") + "\t" + (quiet ? "Quiet mode enabled\n" : "Quiet mode disabled\n") + "\t" + (slow ? "Slow mode enabled\n" : "Slow mode disabled\n") + "\t" + (quitEarly ? "Forced processing enabled\n" : "Forced processing disabled\n"));
+		LOGGER.info("imag started on ${files.size()} files\n" +
+					"\tVersion ${Versioning.getLocalVersion()}\n" +
+					"\t${passes} passes, ${threads} threads\n" +
+					"\t" + (options.png ? "PNG processing enabled\n" : "PNG processing disabled\n") +
+					"\t" + (options.nbt ? "NBT processing enabled\n" : "NBT processing disabled\n") +
+					"\t" + (options.ogg ? "OGG processing enabled\n" : "OGG processing disabled\n") +
+					"\t" + (options.archives ? "Archive processing enabled\n" : "Archive processing disabled\n") +
+					"\t" + (options.encode ? "Encoding enabled\n" : "Encoding disabled\n") +
+					"\t" + (options.quiet ? "Quiet mode enabled\n" : "Quiet mode disabled\n") +
+					"\t" + (options.threads == 1 ? "Slow mode enabled\n" : "Slow mode disabled\n") +
+					"\t" + (options.force ? "Forced processing enabled\n" : "Forced processing disabled\n"));
 
 		long startTime = System.currentTimeMillis();
 		long preSize = size(files);
 
-		asyncs = new CompletableFuture<?>[threads];
-		if(passes == 1) {
+		asyncs = new CompletableFuture<?>[options.threads];
+		if(options.passes == 1) {
 			pass(files, -1);
-		} else for(int pass = 1; pass < passes + 1; pass++) {
+		} else for(int pass = 1; pass < options.passes + 1; pass++) {
 			if(pass(files, pass)) break;
 		}
 
@@ -245,7 +250,7 @@ public class Main {
 			LOGGER.warn("File size increased while processing ${file.getName()}!");
 		}
 
-		if(quiet) return;
+		if(options.quiet) return;
 		StringBuilder sb = new StringBuilder("\nProcessed ${file.getName()} in ${timeFromSecs(timeTaken)}\n");
 
 		if(reduction > 0.0) {
@@ -269,14 +274,14 @@ public class Main {
 
 		long prePassSize = size(files);
 
-		boolean reencodeImage = (whatPassAmIOn == 1) && encode;
+		boolean reencodeImage = (whatPassAmIOn == 1) && options.encode;
 
 		//noinspection TextBlockMigration
 		LOGGER.info("Pass ${whatPassAmIOn}\n"
 					+ "\tOriginal size: ${format(prePassSize)}\n"
 					+ "\tReencode images: ${reencodeImage}\n");
 
-		if(slow) {
+		if(options.threads == 1) {
 			while(!filesToProcess.isEmpty()) {
 				process(filesToProcess.poll(), reencodeImage);
 			}
@@ -310,33 +315,34 @@ public class Main {
 
 		if(doLog) log("\nPass ${whatPassAmIOn} complete!\nSaved " + plural(currentSavings, "byte") + "!");
 
-		if(currentSavings == 0 && quitEarly) {
+		if(currentSavings == 0 && !options.force) {
 			log("Savings are 0, stopping early");
 			return true;
 		}
+
 		return false;
 	}
 
-	private static void addArg(String longName, String shortName, Function<String, Boolean> action) {
+	private static void addArg(String longName, String shortName, BiFunction<Options, String, Boolean> action) {
 		args.put(Pair.of(longName, shortName), action);
 	}
 
-	private static void addArg(String longName, String shortName, Runnable action) {
-		addArg(longName, shortName, value -> {
-			action.run();
+	private static void addArg(String longName, String shortName, Consumer<Options> action) {
+		addArg(longName, shortName, (options, value) -> {
+			action.accept(options);
 			return false;
 		});
 	}
 
 	private static void initArgs() {
-		addArg("--passes", "-p", value -> {
+		addArg("--passes", "-p", (options, value) -> {
 			try {
 				int passes = Integer.parseInt(value);
 				if(passes < 1) {
 					err("Passes must be greater than 0!");
 					return true;
 				}
-				Main.passes = passes;
+				options.passes = passes;
 			} catch (NumberFormatException e) {
 				err("Invalid number of passes: ${value}");
 				return true;
@@ -344,13 +350,13 @@ public class Main {
 			return false;
 		});
 
-		addArg("--disable", null, value -> {
+		addArg("--disable", null, (options, value) -> {
 			String[] values = value.split(",");
 			for(String v : values) {
 				switch(v) {
-					case "png" -> png = false;
-					case "nbt" -> nbt = false;
-					case "ogg" -> ogg = false;
+					case "png" -> options.png = false;
+					case "nbt" -> options.nbt = false;
+					case "ogg" -> options.ogg = false;
 					default -> {
 						err("Unknown filetype: ${v}");
 						return true;
@@ -360,14 +366,14 @@ public class Main {
 			return false;
 		});
 
-		addArg("--max-threads", "-t", value -> {
+		addArg("--max-threads", "-t", (options, value) -> {
 			try {
 				int threads = Integer.parseInt(value);
 				if(threads < 1) {
 					err("Threads must be greater than 0!");
 					return true;
 				}
-				Main.threads = threads;
+				options.threads = threads;
 			} catch (NumberFormatException e) {
 				err("Invalid number of threads: ${value}");
 				return true;
@@ -375,17 +381,17 @@ public class Main {
 			return false;
 		});
 
-		addArg("--slow", "-s", () -> slow = true);
-		addArg("--quiet", "-q", () -> quiet = true);
-		addArg("--no-encode", "-n", () -> encode = false);
-		addArg("--force", "-f", () -> quitEarly = false);
-		addArg("--no-log", "-l", LOGGER::disableInfo);
+		addArg("--slow", "-s", o -> o.passes = 1);
+		addArg("--quiet", "-q", o -> o.quiet = true);
+		addArg("--no-encode", "-n", o -> o.encode = false);
+		addArg("--force", "-f", o -> o.force = true);
+		addArg("--no-log", "-l", o -> o.log = false);
 	}
 
-	private static boolean parseArg(String name, String value) {
+	private static boolean parseArg(Options opts, String name, String value) {
 		for(Pair<String, String> pair : args.keySet()) {
 			if(name.equals(pair.first()) || name.equals(pair.second())) {
-				return args.get(pair).apply(value);
+				return args.get(pair).apply(opts, value);
 			}
 		}
 		err("Unknown argument: ${name}");

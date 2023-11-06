@@ -1,15 +1,8 @@
 package dev.rdh.imag.util;
 
 import dev.rdh.imag.Main;
-import dev.rdh.imag.processors.DefaultFileProcessor;
 import dev.rdh.imag.processors.FileProcessor;
-import dev.rdh.imag.processors.NbtFileProcessor;
-import dev.rdh.imag.processors.OptiVorbisProcessor;
-import dev.rdh.imag.processors.OxiPngProcessor;
-import dev.rdh.imag.processors.PngFixProcessor;
-import dev.rdh.imag.processors.PngOutProcessor;
-import dev.rdh.imag.processors.Reencoder;
-import dev.rdh.imag.processors.ZopfliPngProcessor;
+import dev.rdh.imag.processors.impl.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,16 +20,16 @@ public class Processing {
 	 */
 	public static Throwable processImage(File file, boolean reencode) {
 		List<FileProcessor> processors = new ArrayList<>(Arrays.asList(
-				OxiPngProcessor.get1(),
-				OxiPngProcessor.get2(),
-				ZopfliPngProcessor.get(),
-				PngOutProcessor.get(),
-				PngFixProcessor.get()
+				OxiPngProcessor.getNew1Instance(),
+				OxiPngProcessor.getNew2Instance(),
+				ZopfliPngProcessor.newInstance(),
+				PngOutProcessor.newInstance(),
+				PngFixProcessor.newInstance()
 		));
 
-		if(reencode) processors.add(0, Reencoder.get());
+		if(reencode) processors.add(0, Reencoder.newInstance());
 
-		for(var p : processors) {
+		for(FileProcessor p : processors) {
 			try {
 				long pre = file.length();
 				p.process(file);

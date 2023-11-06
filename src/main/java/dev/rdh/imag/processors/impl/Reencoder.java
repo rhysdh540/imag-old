@@ -1,5 +1,6 @@
-package dev.rdh.imag.processors;
+package dev.rdh.imag.processors.impl;
 
+import dev.rdh.imag.processors.FileProcessor;
 import dev.rdh.imag.util.PngUtils;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -11,7 +12,7 @@ import javax.imageio.ImageIO;
 
 public class Reencoder implements FileProcessor {
 
-	public static Reencoder get() {
+	public static Reencoder newInstance() {
 		return new Reencoder();
 	}
 
@@ -30,6 +31,10 @@ public class Reencoder implements FileProcessor {
 			throw new IOException("Failed to read image");
 		}
 
-		new PngEncoder().withBufferedImage(originalImage).withCompressionLevel(0).withMultiThreadedCompressionEnabled(false).toFile(file);
+		new PngEncoder()
+				.withBufferedImage(originalImage)
+				.withCompressionLevel(0)
+				.withMultiThreadedCompressionEnabled(false)
+				.toFile(file);
 	}
 }

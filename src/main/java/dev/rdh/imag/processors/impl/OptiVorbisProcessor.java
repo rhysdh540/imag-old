@@ -1,5 +1,6 @@
-package dev.rdh.imag.processors;
+package dev.rdh.imag.processors.impl;
 
+import dev.rdh.imag.processors.DefaultFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
 import java.nio.file.Files;
@@ -8,7 +9,7 @@ import java.nio.file.StandardCopyOption;
 public class OptiVorbisProcessor extends DefaultFileProcessor {
 
 	public OptiVorbisProcessor() {
-		super("ogg", false, Binary.OPTIVORBIS, "-q -r ogg2ogg");
+		super(false, Binary.OPTIVORBIS, "-q -r ogg2ogg");
 	}
 
 	public static OptiVorbisProcessor get() {
@@ -21,8 +22,13 @@ public class OptiVorbisProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
+	public String fileType() {
+		return "ogg";
+	}
+
+	@Override
 	public void process(File file) throws Exception {
-		var tempFile = tempFile(file.hashCode() + "-original");
+		File tempFile = tempFile(file.hashCode() + "-original");
 		Files.copy(file.toPath(), tempFile.toPath());
 
 		super.process(file);

@@ -1,5 +1,6 @@
-package dev.rdh.imag.processors;
+package dev.rdh.imag.processors.impl;
 
+import dev.rdh.imag.processors.DefaultFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
 import java.nio.file.Files;
@@ -17,10 +18,10 @@ public class ZopfliPngProcessor extends DefaultFileProcessor {
 	static final char[] filters = { '0', '1', '2', '3', '4', 'm', 'e', 'p', 'b' };
 
 	private ZopfliPngProcessor() {
-		super("png", false, Binary.ZOPFLIPNG, "--iterations=15 --keepchunks=acTL,fdAT,fcTL -y"); // keepchunks so apng works
+		super(false, Binary.ZOPFLIPNG, "--iterations=15 --keepchunks=acTL,fdAT,fcTL -y"); // keepchunks so apng works
 	}
 
-	public static ZopfliPngProcessor get() {
+	public static ZopfliPngProcessor newInstance() {
 		return new ZopfliPngProcessor();
 	}
 
@@ -30,8 +31,13 @@ public class ZopfliPngProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
+	public String fileType() {
+		return "png";
+	}
+
+	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType)) return;
+		if(!file.getCanonicalPath().endsWith(fileType())) return;
 
 		String binaryPath = binary.path();
 

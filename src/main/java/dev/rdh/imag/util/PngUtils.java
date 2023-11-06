@@ -4,7 +4,6 @@ import io.nayuki.png.PngImage;
 import io.nayuki.png.chunk.Actl;
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 
 public class PngUtils {
 	private PngUtils() { }
@@ -21,15 +20,11 @@ public class PngUtils {
 	}
 
 	public static boolean isAnimated(File f) {
-		PngImage image;
-
 		try {
-			image = PngImage.read(f);
+			PngImage image = PngImage.read(f);
+			return PngImage.getChunk(Actl.class, image.afterIdats, image.afterIhdr).isPresent();
 		} catch (IllegalArgumentException | IOException e) {
 			return false;
 		}
-
-		Optional<Actl> actl = PngImage.getChunk(Actl.class, image.afterIdats, image.afterIhdr);
-		return actl.isPresent();
 	}
 }

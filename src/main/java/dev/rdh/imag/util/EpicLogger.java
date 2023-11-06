@@ -2,6 +2,7 @@ package dev.rdh.imag.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
@@ -9,18 +10,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import manifold.util.ILogger;
 
-import static dev.rdh.imag.util.EpicLogger.Level.DEBUG;
-import static dev.rdh.imag.util.EpicLogger.Level.ERROR;
-import static dev.rdh.imag.util.EpicLogger.Level.FATAL;
-import static dev.rdh.imag.util.EpicLogger.Level.INFO;
-import static dev.rdh.imag.util.EpicLogger.Level.TRACE;
-import static dev.rdh.imag.util.EpicLogger.Level.WARN;
+import static dev.rdh.imag.util.EpicLogger.Level.*;
 
 /**
  * A logger that logs to a file. This definitely isnt me justifying including manifold
  */
 @SuppressWarnings({ "unused", "ResultOfMethodCallIgnored", "UnusedReturnValue" })
-public class EpicLogger implements ILogger {
+public class EpicLogger implements ILogger, AutoCloseable {
 
 	private final Object lock = new Object();
 	private final String name;
@@ -46,7 +42,7 @@ public class EpicLogger implements ILogger {
 		if(logFile.getParentFile() != null) logFile.getParentFile().mkdirs();
 
 		try {
-			this.file = new PrintStream(logFile);
+			this.file = new PrintStream(new FileOutputStream(logFile), true);
 			logFile.createNewFile();
 		} catch (FileNotFoundException e) {
 			fatal("Could not open log file: " + logFile.getAbsolutePath(), e);
@@ -201,6 +197,7 @@ public class EpicLogger implements ILogger {
 		return "[${time}] [${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
 	}
 
+	@Override
 	public void close() {
 		if(file != null) {
 			file.close();
