@@ -20,7 +20,7 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 		this.front = front;
 		this.binary = binary;
 
-		var strings = String.join(" ", command).split(" ");
+		String[] strings = String.join(" ", command).split(" ");
 
 		this.command = new ArrayList<>(Arrays.asList(strings));
 	}
@@ -52,7 +52,10 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 
 		addFilesToArgList(file, output.getName());
 
-		ProcessBuilder pb = new ProcessBuilder(command).directory(output.getParentFile()).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
+		ProcessBuilder pb = new ProcessBuilder(command)
+				.directory(output.getParentFile())
+				.redirectError(ProcessBuilder.Redirect.DISCARD)
+				.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 		pb.start().waitFor();
 

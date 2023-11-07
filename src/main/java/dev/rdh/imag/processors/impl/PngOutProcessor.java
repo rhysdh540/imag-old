@@ -39,7 +39,7 @@ public class PngOutProcessor extends DefaultFileProcessor {
 
 		CompletableFuture<?>[] asyncs = new CompletableFuture<?>[blockSizes.length];
 
-		var outputDir = tempDir(String.valueOf(file.hashCode()));
+		File outputDir = tempDir(String.valueOf(file.hashCode()));
 
 		for(int i = 0; i < blockSizes.length; i++) {
 			ArrayList<String> command = new ArrayList<>(this.command);
@@ -47,7 +47,10 @@ public class PngOutProcessor extends DefaultFileProcessor {
 			command.add(1, "-b" + blockSizes[i]);
 			command.add(file.getCanonicalPath());
 
-			ProcessBuilder builder = new ProcessBuilder(command).directory(outputDir).redirectError(ProcessBuilder.Redirect.DISCARD).redirectOutput(ProcessBuilder.Redirect.DISCARD);
+			ProcessBuilder builder = new ProcessBuilder(command)
+					.directory(outputDir)
+					.redirectError(ProcessBuilder.Redirect.DISCARD)
+					.redirectOutput(ProcessBuilder.Redirect.DISCARD);
 
 			asyncs[i] = builder.start().onExit();
 		}

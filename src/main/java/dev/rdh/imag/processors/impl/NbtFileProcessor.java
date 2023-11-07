@@ -9,7 +9,6 @@ import java.util.zip.GZIPInputStream;
 public class NbtFileProcessor extends GZipProcessor {
 	private NbtFileProcessor() {
 		super();
-
 	}
 
 	public static NbtFileProcessor get() {
@@ -30,7 +29,7 @@ public class NbtFileProcessor extends GZipProcessor {
 	protected void addFilesToArgList(File file, String output) throws Exception {
 		File decompressedFile = tempFile(output + "-decompressed");
 
-		try(GZIPInputStream in = new GZIPInputStream(new FileInputStream(file)); var out = new FileOutputStream(decompressedFile)) {
+		try(GZIPInputStream in = new GZIPInputStream(new FileInputStream(file)); FileOutputStream out = new FileOutputStream(decompressedFile)) {
 			byte[] buffer = new byte[4096];
 			int bytesRead;
 			while((bytesRead = in.read(buffer)) != -1) {

@@ -16,22 +16,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-import static dev.rdh.imag.util.FileUtils.echo;
-import static dev.rdh.imag.util.FileUtils.getFiles;
-import static dev.rdh.imag.util.FileUtils.makeWorkDir;
-import static dev.rdh.imag.util.FileUtils.sanitize;
-import static dev.rdh.imag.util.FileUtils.size;
-import static dev.rdh.imag.util.Processing.processImage;
-import static dev.rdh.imag.util.Processing.processNbt;
-import static dev.rdh.imag.util.Processing.processOgg;
-import static dev.rdh.imag.util.StringUtils.Pair;
-import static dev.rdh.imag.util.StringUtils.err;
-import static dev.rdh.imag.util.StringUtils.format;
-import static dev.rdh.imag.util.StringUtils.log;
-import static dev.rdh.imag.util.StringUtils.plural;
-import static dev.rdh.imag.util.StringUtils.timeFromSecs;
+import static dev.rdh.imag.util.FileUtils.*;
+import static dev.rdh.imag.util.Processing.*;
+import static dev.rdh.imag.util.StringUtils.*;
 
 public class Main {
 
@@ -55,25 +43,22 @@ public class Main {
 	#endif public static void main(String... args) {
 		preMainSetup();
 		#if DEV
-		String a = "/Users/rhys/desktop/test.png";
+		String a = "/Users/rhys/documents/.png";
 		args = new String[]{ a };
 		#endif
 
 		if(args.length < 1) {
 			err("No input specified! Use --help or -h for usage.");
-			log("\033[?25h");
 			return;
 		}
 
 		if(args[0].startsWith("--version")) {
 			log("imag version " + Versioning.getLocalVersion());
-			log("\033[?25h");
 			return;
 		}
 
 		if(args[0].startsWith("--update")) {
 			Versioning.downloadNewVersionIfNecessary();
-			log("\033[?25h");
 			return;
 		}
 
@@ -108,7 +93,6 @@ public class Main {
 						
 					  --update               Update imag to the latest version.
 					""");
-			log("\033[?25h");
 			return;
 		}
 
@@ -156,7 +140,7 @@ public class Main {
 
 		LOGGER.info("imag started on ${files.size()} files\n" +
 					"\tVersion ${Versioning.getLocalVersion()}\n" +
-					"\t${passes} passes, ${threads} threads\n" +
+					"\t${options.passes} passes, ${options.threads} threads\n" +
 					"\t" + (options.png ? "PNG processing enabled\n" : "PNG processing disabled\n") +
 					"\t" + (options.nbt ? "NBT processing enabled\n" : "NBT processing disabled\n") +
 					"\t" + (options.ogg ? "OGG processing enabled\n" : "OGG processing disabled\n") +
