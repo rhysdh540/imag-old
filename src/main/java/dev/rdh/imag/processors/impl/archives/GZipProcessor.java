@@ -19,13 +19,13 @@ public class GZipProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "gz";
 	}
 
 	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType())) return;
+		if(!file.getCanonicalPath().endsWith(extension())) return;
 
 		String name = String.valueOf(file.hashCode());
 

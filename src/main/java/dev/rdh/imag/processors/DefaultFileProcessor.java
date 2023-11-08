@@ -1,7 +1,7 @@
 package dev.rdh.imag.processors;
 
-import dev.rdh.imag.Main;
 import dev.rdh.imag.util.Binary;
+import dev.rdh.imag.Main;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -25,11 +25,6 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 		this.command = new ArrayList<>(Arrays.asList(strings));
 	}
 
-	@Override
-	public abstract String name();
-
-	public abstract String fileType();
-
 	protected void addFilesToArgList(File file, String output) throws Exception {
 		this.command.add(0, binary.path());
 		if(front) command.add(1, file.getCanonicalPath());
@@ -40,7 +35,7 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 
 	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType())) return;
+		if(!file.getCanonicalPath().endsWith(extension())) return;
 
 		if(binary.path() == null) { // If the binary is not found, skip processing
 			return;
@@ -59,13 +54,13 @@ public abstract class DefaultFileProcessor implements FileProcessor {
 
 		pb.start().waitFor();
 
-		if(output.exists()) {
+		if(output.exists() && output.length() < file.length()) {
 			Files.move(output.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}
 	}
 
 	protected final File tempFile(String name) throws Exception {
-		File result = File.createTempFile(name, '.' + fileType(), Main.WORKDIR);
+		File result = File.createTempFile(name, '.' + extension(), Main.WORKDIR);
 		result.deleteOnExit();
 		result.delete();
 		return result;

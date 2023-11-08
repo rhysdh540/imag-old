@@ -19,7 +19,7 @@ public class ZipProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "zip";
 	}
 

@@ -11,6 +11,7 @@ import java.util.Date;
 import manifold.util.ILogger;
 
 import static dev.rdh.imag.util.EpicLogger.Level.*;
+import static manifold.util.ManExceptionUtil.unchecked;
 
 /**
  * A logger that logs to a file. This definitely isnt me justifying including manifold
@@ -34,7 +35,7 @@ public class EpicLogger implements ILogger, AutoCloseable {
 			if(logFile.isDirectory()) {
 				logFile.delete();
 			} else {
-				System.out.println("compressing");
+				System.out.println("Compressing log file" + logFile.getName() + "... (This may take a while)");
 				compress(logFile);
 			}
 		}
@@ -44,10 +45,8 @@ public class EpicLogger implements ILogger, AutoCloseable {
 		try {
 			this.file = new PrintStream(new FileOutputStream(logFile), true);
 			logFile.createNewFile();
-		} catch (FileNotFoundException e) {
-			fatal("Could not open log file: " + logFile.getAbsolutePath(), e);
 		} catch (IOException e) {
-			fatal("Could not create log file: " + logFile.getAbsolutePath(), e);
+			throw unchecked(e);
 		}
 		return this;
 	}

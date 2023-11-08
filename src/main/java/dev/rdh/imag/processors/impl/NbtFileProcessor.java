@@ -11,7 +11,7 @@ public class NbtFileProcessor extends GZipProcessor {
 		super();
 	}
 
-	public static NbtFileProcessor get() {
+	public static NbtFileProcessor newInstance() {
 		return new NbtFileProcessor();
 	}
 
@@ -21,7 +21,7 @@ public class NbtFileProcessor extends GZipProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "nbt";
 	}
 

@@ -1,5 +1,7 @@
 package dev.rdh.imag.util;
 
+import dev.rdh.imag.Main;
+
 import org.jetbrains.annotations.NotNull;
 
 public class StringUtils {
@@ -45,6 +47,7 @@ public class StringUtils {
 	public static void err(String m, @NotNull Throwable t) {
 		err(m);
 		t.printStackTrace();
+		Main.LOGGER.error(m, t);
 	}
 
 	/**
@@ -83,6 +86,10 @@ public class StringUtils {
 		String r = String.format("%,.2f", d);
 		while(r.endsWith("0")) r = r.substring(0, r.length() - 1);
 		return r;
+	}
+
+	public static String sign(Number n) {
+		return (n.doubleValue() > 0 ? "+" : "") + format(n.doubleValue());
 	}
 
 	/**

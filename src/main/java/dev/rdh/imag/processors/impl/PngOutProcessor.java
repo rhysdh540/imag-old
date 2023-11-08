@@ -29,7 +29,7 @@ public class PngOutProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "png";
 	}
 
@@ -64,6 +64,8 @@ public class PngOutProcessor extends DefaultFileProcessor {
 
 		File bestResult = Arrays.stream(outputDir.listFiles()).min(Comparator.comparingLong(File::length)).orElse(file);
 
-		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		if(bestResult.length() < file.length()) {
+			Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 }

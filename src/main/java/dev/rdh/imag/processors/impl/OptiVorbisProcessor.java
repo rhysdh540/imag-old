@@ -12,7 +12,7 @@ public class OptiVorbisProcessor extends DefaultFileProcessor {
 		super(false, Binary.OPTIVORBIS, "-q -r ogg2ogg");
 	}
 
-	public static OptiVorbisProcessor get() {
+	public static OptiVorbisProcessor newInstance() {
 		return new OptiVorbisProcessor();
 	}
 
@@ -22,7 +22,7 @@ public class OptiVorbisProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "ogg";
 	}
 

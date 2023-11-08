@@ -5,12 +5,15 @@ import dev.rdh.imag.util.PngUtils;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.zip.Deflater;
 
 import com.pngencoder.PngEncoder;
 
 import javax.imageio.ImageIO;
 
 public class Reencoder implements FileProcessor {
+
+	private Reencoder() {}
 
 	public static Reencoder newInstance() {
 		return new Reencoder();
@@ -22,18 +25,23 @@ public class Reencoder implements FileProcessor {
 	}
 
 	@Override
+	public String extension() {
+		return "png";
+	}
+
+	@Override
 	public void process(File file) throws Exception {
 		if(!PngUtils.isPNG(file) || PngUtils.isAnimated(file)) return;
 
-		BufferedImage originalImage = ImageIO.read(file);
+		BufferedImage bi = ImageIO.read(file);
 
-		if(originalImage == null) {
+		if(bi == null) {
 			throw new IOException("Failed to read image");
 		}
 
 		new PngEncoder()
-				.withBufferedImage(originalImage)
-				.withCompressionLevel(0)
+				.withBufferedImage(bi)
+				//.withCompressionLevel(Deflater.NO_COMPRESSION)
 				.withMultiThreadedCompressionEnabled(false)
 				.toFile(file);
 	}

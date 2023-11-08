@@ -6,4 +6,6 @@ public interface FileProcessor {
 	void process(File file) throws Exception;
 
 	String name();
+
+	String extension();
 }

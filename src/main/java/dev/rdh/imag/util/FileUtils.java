@@ -1,6 +1,5 @@
 package dev.rdh.imag.util;
 
-import dev.rdh.imag.Options;
 import java.io.File;
 import java.io.IOError;
 import java.io.IOException;
@@ -24,26 +23,30 @@ public class FileUtils {
 	 * Depending on the program's settings, this will only return files ending in {@code .png}, {@code .nbt}, or {@code .ogg}.
 	 *
 	 * @param dir the directory to get files from.
-	 * @return a Deque of all valid files in the directory.
+	 * @param png whether to include png files.
+	 * @param nbt whether to include nbt files.
+	 * @param ogg whether to include ogg files.
+	 * @param archives whether to include zip and gz files.
+	 * @return a list of all valid files in the directory.
 	 */
-	public static List<File> getFiles(@NotNull File dir, Options opts) {
+	public static List<File> getFiles(@NotNull File dir, boolean png, boolean nbt, boolean ogg, boolean archives) {
 		List<File> files = new ArrayList<>();
 
 		List<String> extensions = new ArrayList<>();
-		if(opts.png) extensions.add("png");
-		if(opts.nbt) extensions.add("nbt");
-		if(opts.ogg) extensions.add("ogg");
-		if(opts.archives) {
+		if(png) extensions.add("png");
+		if(nbt) extensions.add("nbt");
+		if(ogg) extensions.add("ogg");
+		if(archives) {
 			extensions.add("zip");
 			extensions.add("gz");
 		}
 
-		@SuppressWarnings("all")  // regex + string concat = ???
+		@SuppressWarnings("RegExpUnnecessaryNonCapturingGroup") // regex + string concat = ???
 		String filter = "(?i).*\\.(?:" + String.join("|", extensions) + ")";
 
 		//noinspection DataFlowIssue
 		for(File file : dir.listFiles()) {
-			if(file.isDirectory()) files.addAll(getFiles(file, opts));
+			if(file.isDirectory()) files.addAll(getFiles(file, png, nbt, ogg, archives));
 			else if(file.getName().matches(filter)) files.add(file);
 		}
 		return files;

@@ -10,11 +10,11 @@ public class OxiPngProcessor extends DefaultFileProcessor {
 		super(false, Binary.OXIPNG, "-o max -q", String.join(" ", command));
 	}
 
-	public static OxiPngProcessor getNew1Instance() {
+	public static OxiPngProcessor new1Instance() {
 		return new OxiPngProcessor();
 	}
 
-	public static OxiPngProcessor getNew2Instance() {
+	public static OxiPngProcessor new2Instance() {
 		return new OxiPngProcessor("-a");
 	}
 
@@ -24,7 +24,7 @@ public class OxiPngProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "png";
 	}
 

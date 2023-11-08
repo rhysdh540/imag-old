@@ -30,13 +30,13 @@ public class ZopfliPngProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "png";
 	}
 
 	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(fileType())) return;
+		if(!file.getCanonicalPath().endsWith(extension())) return;
 
 		String binaryPath = binary.path();
 
@@ -65,14 +65,15 @@ public class ZopfliPngProcessor extends DefaultFileProcessor {
 		CompletableFuture.allOf(asyncs).join();
 
 		if(outputDir.listFiles() == null) {
-			Main.LOGGER.error("No output files found for file ${file.name}!");
+			Main.LOGGER.error("No output files found for file ${file.getName()}!");
 			return;
 		}
 
 		File bestResult = Arrays.stream(outputDir.listFiles())
 								.min(Comparator.comparingLong(File::length))
 								.orElse(file);
-
-		Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		if(bestResult.length() < file.length()) {
+			Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		}
 	}
 }

@@ -20,7 +20,7 @@ public class PngFixProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	public String fileType() {
+	public String extension() {
 		return "png";
 	}
 
