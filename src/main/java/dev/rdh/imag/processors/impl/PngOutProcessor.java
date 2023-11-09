@@ -1,5 +1,6 @@
 package dev.rdh.imag.processors.impl;
 
+import dev.rdh.imag.Main;
 import dev.rdh.imag.processors.DefaultFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
@@ -9,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
-
-import static dev.rdh.imag.util.StringUtils.err;
 
 @SuppressWarnings({ "DuplicatedCode", "DataFlowIssue" })
 public class PngOutProcessor extends DefaultFileProcessor {
@@ -58,12 +57,13 @@ public class PngOutProcessor extends DefaultFileProcessor {
 		CompletableFuture.allOf(asyncs).join();
 
 		if(outputDir.listFiles() == null) {
-			err("No output files found!");
+			Main.LOGGER.error("No output files found for file " + file.getName() + "!");
 			return;
 		}
 
-		File bestResult = Arrays.stream(outputDir.listFiles()).min(Comparator.comparingLong(File::length)).orElse(file);
-
+		File bestResult = Arrays.stream(outputDir.listFiles())
+								.min(Comparator.comparingLong(File::length))
+								.orElse(file);
 		if(bestResult.length() < file.length()) {
 			Files.copy(bestResult.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
 		}

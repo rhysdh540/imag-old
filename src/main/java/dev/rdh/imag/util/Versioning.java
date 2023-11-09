@@ -41,8 +41,8 @@ public class Versioning {
 			return;
 		}
 
-		log("Downloading imag: ${online}");
-		try(InputStream stream = FileUtils.onlineResource(getUrl("imag-${online.toString()}.jar"))) {
+		log("Downloading imag: " + online);
+		try(InputStream stream = FileUtils.onlineResource(getUrl("imag-" + online + ".jar"))) {
 			if(stream == null) throw new IOException("URL not valid or you are offline");
 
 			File f = new File(Main.MAINDIR, "imag.jar");

@@ -104,7 +104,7 @@ public class FileUtils {
 	 * @return the resource as an input stream.
 	 */
 	public static @Nullable InputStream localResource(String path) {
-		return StringUtils.class.getClassLoader().getResourceAsStream(path);
+		return FileUtils.class.getClassLoader().getResourceAsStream(path);
 	}
 
 	/**

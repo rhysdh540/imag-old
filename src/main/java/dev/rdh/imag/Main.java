@@ -42,7 +42,7 @@ public class Main {
 			.enableInfo()
 			;
 
-	//statistics
+	// statistics
 	static double maxReduction = 0.0;
 	static long maxReductionSize = 0;
 
@@ -169,21 +169,22 @@ public class Main {
 				File tempDir = new File(WORKDIR, "worker-" + index);
 				tempDir.mkdirs();
 
-				while(!queue.isEmpty()) {
-					//get the next file to process
+				while(true) {
+					// get the file
 					File file;
 					synchronized(queue) {
 						file = queue.poll();
 					}
 					if(file == null) break;
 
-					// get file statistics
+					// get starting file info
 					String name = file.getName();
 					long pre = file.length();
 					long start = System.currentTimeMillis();
 
 					// copy the file to the temp directory
 					File tempFile = new File(tempDir, name);
+
 					try {
 						Files.copy(file.toPath(), tempFile.toPath());
 					} catch(Exception e) {
@@ -216,7 +217,7 @@ public class Main {
 					}
 					tempFile.delete();
 
-					// get ending file statistics
+					// get ending file info
 					long end = System.currentTimeMillis();
 					long post = file.length();
 					double reduction = 100.0 - ((double) post / (double) pre) * 100.0;
@@ -226,17 +227,17 @@ public class Main {
 
 					double timeTaken = (end - start) / 1000.0;
 
-					LOGGER.info("Processed " + name + " in " + timeFromSecs(timeTaken) + "\n" +
-								"Size: " + format(pre) + " -> " + format(post) + " (" + format(reduction) + "%)");
+					LOGGER.info("Processed " + file.getName() + " in " + timeFromSecs(timeTaken) +
+								"\nSize: " + format(pre) + " -> " + format(post) + " (" + format(reduction) + "%)");
 					if(reduction < 0.0) {
-						LOGGER.warn("File size increased while processing " + name + "!");
+						LOGGER.warn("File size increased while processing " + file.getName() + "!");
 					}
 
 					String message = "\nProcessed " + name + " in " + timeFromSecs(timeTaken) + "\n";
 
 					if(reduction > 0.0) {
 						message += "File size decreased: " + format(pre) + " -> " + plural(post, "byte") + '\n'
-						   + "Savings of " + plural(pre - post, "byte") + " (" + format(reduction) + "%)";
+								   + "Savings of " + plural(pre - post, "byte") + " (" + format(reduction) + "%)";
 					} else if(reduction < 0.0) {
 						message += "File size increased! This should not happen!";
 					} else {
@@ -245,7 +246,7 @@ public class Main {
 
 					log(message);
 				}
-			}, "imag worker #" + index)
+			}, "imag worker #${index}")
 					.start();
 		}
 

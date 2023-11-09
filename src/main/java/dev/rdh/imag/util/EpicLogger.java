@@ -1,13 +1,13 @@
 package dev.rdh.imag.util;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import manifold.util.ILogger;
 
 import static dev.rdh.imag.util.EpicLogger.Level.*;
@@ -193,7 +193,7 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	private String getPrefix(Level level) {
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		String time = sdf.format(new Date());
-		return "[" + time + "] [" + Thread.currentThread().getName() + "/" + level.name() + "] (" + name + "): ";
+		return "[${time}] [${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
 	}
 
 	@Override
@@ -225,7 +225,9 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	private void deleteOldFiles(File file) {
 		if(file.isFile()) return;
 
-		File[] files = file.listFiles((f) -> f.getName().endsWith(".gz") && System.currentTimeMillis() - f.lastModified() > 2.592E9);
+		long month = TimeUnit.DAYS.convert(30, TimeUnit.MILLISECONDS);
+
+		File[] files = file.listFiles(f -> f.getName().endsWith(".gz") && System.currentTimeMillis() - f.lastModified() > month);
 
 		if(files == null) return;
 
@@ -235,6 +237,6 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	}
 
 	public enum Level {
-		DEBUG, TRACE, INFO, WARN, ERROR, FATAL;
+		DEBUG, TRACE, INFO, WARN, ERROR, FATAL
 	}
 }
