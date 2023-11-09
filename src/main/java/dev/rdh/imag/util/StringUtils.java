@@ -56,7 +56,7 @@ public class StringUtils {
 	 * @param message the message to log.
 	 */
 	public static void err(String message) {
-		log("\033[31;4m${message}\033[0m");
+		log("\033[31;4m" + message + "\033[0m");
 	}
 
 	public static void err(Throwable t) {

@@ -193,7 +193,7 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	private String getPrefix(Level level) {
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		String time = sdf.format(new Date());
-		return "[${time}] [${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
+		return "[" + time + "] [" + Thread.currentThread().getName() + "/" + level.name() + "] (" + name + "): ";
 	}
 
 	@Override
@@ -209,7 +209,7 @@ public class EpicLogger implements ILogger, AutoCloseable {
 		file.renameTo(newFile);
 		file = newFile;
 
-		var pb = new ProcessBuilder(Binary.ZOPFLI.path(), "--gzip", "--i1000", file.getAbsolutePath())
+		ProcessBuilder pb = new ProcessBuilder(Binary.ZOPFLI.path(), "--gzip", "--i1000", file.getAbsolutePath())
 				.redirectError(Redirect.DISCARD)
 				.redirectOutput(Redirect.DISCARD)
 				.directory(file.getParentFile());
@@ -235,6 +235,6 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	}
 
 	public enum Level {
-		DEBUG, TRACE, INFO, WARN, ERROR, FATAL
+		DEBUG, TRACE, INFO, WARN, ERROR, FATAL;
 	}
 }

@@ -30,10 +30,9 @@ configurations {
 }
 
 dependencies {
-    manifold 'strings'
     manifold 'preprocessor'
     include(manifold('util'))
-    include("com.pngencoder:pngencoder:0.14.0")
+    include('com.pngencoder:pngencoder:0.14.0')
     compileOnly 'org.jetbrains:annotations:24.0.0'
 
     include(fileTree(dir: 'libs', include: ['*.jar']))
@@ -43,7 +42,7 @@ tasks.withType(JavaCompile).configureEach {
     outputs.upToDateWhen { false }
     options.encoding = "UTF-8"
     options.release.set 17
-    options.compilerArgs += ['-Xplugin:Manifold', '-Amanifold.strings.simple.disabled=true'] // don't allow simple $foo expressions
+    options.compilerArgs += ['-Xplugin:Manifold']
 }
 
 jar {

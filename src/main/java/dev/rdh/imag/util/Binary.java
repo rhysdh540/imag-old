@@ -118,8 +118,7 @@ public enum Binary {
 		ProcessBuilder pb = new ProcessBuilder(which, cmd)
 				.redirectError(ProcessBuilder.Redirect.DISCARD);
 		Process p = pb.start();
-		p.waitFor();
-		return p.exitValue() == 0;
+		return p.waitFor() == 0;
 	}
 
 	enum OS {

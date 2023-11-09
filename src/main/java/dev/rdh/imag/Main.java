@@ -42,9 +42,13 @@ public class Main {
 			.enableInfo()
 			;
 
+	//statistics
 	static double maxReduction = 0.0;
 	static long maxReductionSize = 0;
 
+	/**
+	 * The list of processors to run.
+	 */
 	public static final List<Supplier<FileProcessor>> processors = new ArrayList<>(List.of(
 			Reencoder::newInstance,
 			OxiPngProcessor::new1Instance,
@@ -56,9 +60,11 @@ public class Main {
 			OptiVorbisProcessor::newInstance
 	));
 
-	#if DEV
-	@SuppressWarnings("all")
-	#endif
+	/**
+	 * The main method. Parses arguments then calls {@link #run(Queue)} a number of times.
+	 * @param args the arguments to parse.
+	 */
+	#if DEV @SuppressWarnings("all") #endif
 	public static void main(String[] args) {
 		#if DEV
 		String a = "/Users/rhys/Documents/GitHub/vanillaxbr/assets/minecraft/optifine/ctm";
@@ -86,7 +92,7 @@ public class Main {
 				return;
 			}
 			case "-v", "--version" -> {
-				log("imag v${Versioning.getLocalVersion()}");
+				log("imag v" + Versioning.getLocalVersion());
 				return;
 			}
 			case "-u", "--update" -> {
@@ -110,7 +116,7 @@ public class Main {
 			files.sort(Comparator.comparing(File::getName));
 		}
 
-		LOGGER.info("imag v${Versioning.getLocalVersion()}");
+		LOGGER.info("imag v" + Versioning.getLocalVersion());
 		LOGGER.info("Found " + plural(files.size(), "file"));
 		LOGGER.info("Initial size: " + plural(FileUtils.size(files), "byte"));
 		LOGGER.info(plural(passes, "pass") + ", " + plural(threads, "thread"));
@@ -119,7 +125,7 @@ public class Main {
 		long startTime = System.currentTimeMillis();
 
 		for(int i = 0; i < passes; i++) {
-			log("\033[1;4mStarting pass ${i + 1}/${passes}\033[0m");
+			log("\033[1;4mStarting pass " + (i + 1) + "/" + passes + "\033[0m");
 			long passPre = FileUtils.size(files);
 			run(new ArrayDeque<>(files));
 			if(i == 0) {
@@ -155,6 +161,7 @@ public class Main {
 	 * Run the processors on the files in the queue.
 	 * @param queue the queue of files to process.
 	 */
+	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public static void run(Queue<File> queue) {
 		for(int i = 0; i < threads; i++) {
 			final int index = i;
@@ -163,17 +170,20 @@ public class Main {
 				tempDir.mkdirs();
 
 				while(!queue.isEmpty()) {
+					//get the next file to process
 					File file;
 					synchronized(queue) {
 						file = queue.poll();
 					}
 					if(file == null) break;
+
+					// get file statistics
 					String name = file.getName();
 					long pre = file.length();
 					long start = System.currentTimeMillis();
 
+					// copy the file to the temp directory
 					File tempFile = new File(tempDir, name);
-
 					try {
 						Files.copy(file.toPath(), tempFile.toPath());
 					} catch(Exception e) {
@@ -182,6 +192,7 @@ public class Main {
 						continue;
 					}
 
+					// process the file
 					for(Supplier<FileProcessor> s : processors) {
 						FileProcessor p = s.get();
 						if(!name.endsWith(p.extension())) continue;
@@ -195,6 +206,7 @@ public class Main {
 						}
 					}
 
+					// copy the temp file back to the original file if it's smaller
 					if(tempFile.length() < file.length()) {
 						try {
 							Files.copy(tempFile.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -202,9 +214,9 @@ public class Main {
 							err("Failed to copy file: " + tempFile.getAbsolutePath(), e);
 						}
 					}
-
 					tempFile.delete();
 
+					// get ending file statistics
 					long end = System.currentTimeMillis();
 					long post = file.length();
 					double reduction = 100.0 - ((double) post / (double) pre) * 100.0;
@@ -214,26 +226,26 @@ public class Main {
 
 					double timeTaken = (end - start) / 1000.0;
 
-					LOGGER.info("Processed ${file.getName()} in ${timeFromSecs(timeTaken)}\n" +
-								"Size: ${format(pre)} -> ${format(post)} (${format(reduction)}%)");
+					LOGGER.info("Processed " + name + " in " + timeFromSecs(timeTaken) + "\n" +
+								"Size: " + format(pre) + " -> " + format(post) + " (" + format(reduction) + "%)");
 					if(reduction < 0.0) {
-						LOGGER.warn("File size increased while processing ${file.getName()}!");
+						LOGGER.warn("File size increased while processing " + name + "!");
 					}
 
-					StringBuilder sb = new StringBuilder("\nProcessed ${file.getName()} in ${timeFromSecs(timeTaken)}\n");
+					String message = "\nProcessed " + name + " in " + timeFromSecs(timeTaken) + "\n";
 
 					if(reduction > 0.0) {
-						sb.append("File size decreased: ").append(format(pre)).append(" -> ").append(plural(post, "byte")).append('\n')
-						  .append("Savings of ").append(plural(pre - post, "byte")).append(" (").append(format(reduction)).append("%)");
+						message += "File size decreased: " + format(pre) + " -> " + plural(post, "byte") + '\n'
+						   + "Savings of " + plural(pre - post, "byte") + " (" + format(reduction) + "%)";
 					} else if(reduction < 0.0) {
-						sb.append("File size increased! This should not happen!");
+						message += "File size increased! This should not happen!";
 					} else {
-						sb.append("File size not changed");
+						message += "File size not changed";
 					}
 
-					log(sb);
+					log(message);
 				}
-			}, "imag worker #${index}")
+			}, "imag worker #" + index)
 					.start();
 		}
 
@@ -270,6 +282,21 @@ public class Main {
 				threads = Integer.parseInt(arg.substring(arg.indexOf("=") + 1));
 			} catch(NumberFormatException e) {
 				err("Invalid number of threads: " + arg);
+				return true;
+			}
+			return false;
+		});
+		args.put(Pair.of("--disable", "--disable"), arg -> {
+			String[] names = arg.substring(arg.indexOf("=") + 1).split(",");
+			outer: for(String name : names) {
+				for(Supplier<FileProcessor> s : processors) {
+					FileProcessor p = s.get();
+					if(p.name().equalsIgnoreCase(name)) {
+						processors.remove(s);
+						continue outer;
+					}
+				}
+				err("Invalid processor: " + name);
 				return true;
 			}
 			return false;

@@ -65,7 +65,7 @@ public class ZopfliPngProcessor extends DefaultFileProcessor {
 		CompletableFuture.allOf(asyncs).join();
 
 		if(outputDir.listFiles() == null) {
-			Main.LOGGER.error("No output files found for file ${file.getName()}!");
+			Main.LOGGER.error("No output files found for file " + file.getName() "!");
 			return;
 		}
 

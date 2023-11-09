@@ -34,8 +34,8 @@ public class Versioning {
 	 * <p>This is the main function of this class.</p>
 	 */
 	public static void downloadNewVersionIfNecessary() {
-		Version local = Versioning.getLocalVersion();
-		Version online = Versioning.getOnlineVersion();
+		Version local = getLocalVersion();
+		Version online = getOnlineVersion();
 		if(!online.isNewerThan(local)) {
 			log("imag is up to date");
 			return;
@@ -47,7 +47,7 @@ public class Versioning {
 
 			File f = new File(Main.MAINDIR, "imag.jar");
 			Files.copy(stream, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
-			log("imag v${online} downloaded to ${f.getAbsolutePath()}");
+			log("imag v" + online + " downloaded to " + f.getAbsolutePath());
 			log("Restarting...");
 		} catch (IOException e) {
 			err("Failed to download version.txt", e);
@@ -61,9 +61,8 @@ public class Versioning {
 	 */
 	public static Version getLocalVersion() {
 		#if DEV
-		//noinspection ConstantConditions
-		if(true) return Version.from("100.0");
-		#endif
+		return Version.from("100.0");
+		#else
 		String iv = Versioning.class.getPackage().getImplementationVersion();
 		if(iv == null) {
 			err("Could not get local version");
@@ -71,6 +70,7 @@ public class Versioning {
 		}
 		iv = String.join("", iv.split("\\[|]|, "));
 		return Version.from(iv);
+		#endif
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class Versioning {
 			String s = new String(resource.readAllBytes());
 			return Version.from(s);
 		} catch (IOException e) {
-			err("Failed to read online version.txt: ${e.getMessage()}");
+			err("Failed to read online version.txt!", e);
 			return Version.from(null);
 		}
 	}
@@ -123,7 +123,7 @@ public class Versioning {
 			try {
 				temp = Integer.parseInt(parts[0]);
 			} catch (NumberFormatException e) {
-				err("Invalid major version found: ${parts[0]}");
+				err("Invalid major version found: " + parts[0]);
 				temp = 0;
 			}
 			major = temp;
@@ -131,7 +131,7 @@ public class Versioning {
 			try {
 				temp = Integer.parseInt(String.valueOf(parts[1].charAt(0)));
 			} catch (NumberFormatException e) {
-				err("Invalid minor version found: ${parts[1].charAt(0)}");
+				err("Invalid minor version found: " + parts[1].charAt(0));
 				temp = 0;
 			}
 			minor = temp;

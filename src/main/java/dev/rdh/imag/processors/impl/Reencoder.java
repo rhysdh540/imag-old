@@ -5,7 +5,6 @@ import dev.rdh.imag.util.PngUtils;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.zip.Deflater;
 
 import com.pngencoder.PngEncoder;
 
@@ -41,7 +40,6 @@ public class Reencoder implements FileProcessor {
 
 		new PngEncoder()
 				.withBufferedImage(bi)
-				//.withCompressionLevel(Deflater.NO_COMPRESSION)
 				.withMultiThreadedCompressionEnabled(false)
 				.toFile(file);
 	}
