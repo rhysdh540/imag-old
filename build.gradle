@@ -72,7 +72,7 @@ jar {
 
 run {
     outputs.upToDateWhen{false}
-    systemProperty 'java.library.path', project(':rust').file('target/debug').absolutePath
+    systemProperty 'java.library.path', project(':rust').file('target/release').absolutePath
 }
 
 def manifold(String path) {

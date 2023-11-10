@@ -1,7 +1,7 @@
 package dev.rdh.imag.processors.impl;
 
 import dev.rdh.imag.Main;
-import dev.rdh.imag.processors.DefaultFileProcessor;
+import dev.rdh.imag.processors.BinaryFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
 import java.nio.file.Files;
@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings({ "DataFlowIssue" })
-public class ZopfliPngProcessor extends DefaultFileProcessor {
+public class ZopfliPngProcessor extends BinaryFileProcessor {
 
 	static final char[] filters = { '0', '1', '2', '3', '4', 'm', 'e', 'p', 'b' };
 

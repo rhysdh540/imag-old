@@ -1,10 +1,13 @@
 package dev.rdh.imag.util;
 
+import dev.rdh.imag.processors.impl.archives.GZipProcessor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +38,7 @@ public class EpicLogger implements ILogger, AutoCloseable {
 			if(logFile.isDirectory()) {
 				logFile.delete();
 			} else {
-				System.out.println("Compressing log file" + logFile.getName() + "... (This may take a while)");
+				System.out.println("Compressing log file " + logFile.getName() + "... (This may take a while)");
 				compress(logFile);
 			}
 		}
@@ -209,14 +212,14 @@ public class EpicLogger implements ILogger, AutoCloseable {
 		file.renameTo(newFile);
 		file = newFile;
 
-		ProcessBuilder pb = new ProcessBuilder(Binary.ZOPFLI.path(), "--gzip", "--i1000", file.getAbsolutePath())
-				.redirectError(Redirect.DISCARD)
-				.redirectOutput(Redirect.DISCARD)
-				.directory(file.getParentFile());
-
 		try {
-			pb.start().waitFor();
-		} catch (Exception ignore) {}
+			byte[] data = Files.readAllBytes(file.toPath());
+			byte[] compressed = GZipProcessor.compress(data);
+			Files.write(Path.of(file.getAbsolutePath() + ".gz"), compressed);
+		} catch (IOException e) {
+			file.delete();
+			throw unchecked(e);
+		}
 		file.delete();
 
 		deleteOldFiles(file.getParentFile());

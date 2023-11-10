@@ -1,21 +1,15 @@
 package dev.rdh.imag.processors.impl;
 
-import dev.rdh.imag.processors.DefaultFileProcessor;
-import dev.rdh.imag.util.Binary;
+import dev.rdh.imag.processors.FileProcessor;
 import java.io.File;
+import java.nio.file.Files;
 
-public class OxiPngProcessor extends DefaultFileProcessor {
+public class OxiPngProcessor implements FileProcessor {
 
-	private OxiPngProcessor(String... command) {
-		super(false, Binary.OXIPNG, "-o max -q", String.join(" ", command));
-	}
+	private OxiPngProcessor() {}
 
-	public static OxiPngProcessor new1Instance() {
+	public static OxiPngProcessor newInstance() {
 		return new OxiPngProcessor();
-	}
-
-	public static OxiPngProcessor new2Instance() {
-		return new OxiPngProcessor("-a");
 	}
 
 	@Override
@@ -29,9 +23,18 @@ public class OxiPngProcessor extends DefaultFileProcessor {
 	}
 
 	@Override
-	protected void addFilesToArgList(File file, String output) throws Exception {
-		command.add(0, binary.path());
-		command.add("--out=" + output);
-		command.add(file.getCanonicalPath());
+	public void process(File file) throws Exception {
+		if(!file.getCanonicalPath().endsWith(extension())) return;
+
+		byte[] data = Files.readAllBytes(file.toPath());
+		byte[] compressed = compress(data, false);
+		if(compressed.length < data.length) data = compressed;
+
+		byte[] compressedAlpha = compress(data, true);
+		if(compressedAlpha.length < data.length) data = compressedAlpha;
+
+		if(data.length < file.length()) Files.write(file.toPath(), data);
 	}
+
+	private static native byte[] compress(byte[] data, boolean alpha);
 }

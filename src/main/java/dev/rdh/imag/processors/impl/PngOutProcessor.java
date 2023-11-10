@@ -1,7 +1,7 @@
 package dev.rdh.imag.processors.impl;
 
 import dev.rdh.imag.Main;
-import dev.rdh.imag.processors.DefaultFileProcessor;
+import dev.rdh.imag.processors.BinaryFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
 import java.nio.file.Files;
@@ -12,7 +12,7 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings({ "DuplicatedCode", "DataFlowIssue" })
-public class PngOutProcessor extends DefaultFileProcessor {
+public class PngOutProcessor extends BinaryFileProcessor {
 
 	private PngOutProcessor() {
 		super(true, Binary.PNGOUT, "-q -y -r -k1 -s0");

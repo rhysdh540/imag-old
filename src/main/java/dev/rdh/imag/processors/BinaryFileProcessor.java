@@ -10,13 +10,13 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({ "ResultOfMethodCallIgnored", "DuplicatedCode" })
-public abstract class DefaultFileProcessor implements FileProcessor {
+public abstract class BinaryFileProcessor implements FileProcessor {
 
 	protected final List<String> command;
 	protected final Binary binary;
 	final boolean front;
 
-	protected DefaultFileProcessor(boolean front, Binary binary, String... command) {
+	protected BinaryFileProcessor(boolean front, Binary binary, String... command) {
 		this.front = front;
 		this.binary = binary;
 

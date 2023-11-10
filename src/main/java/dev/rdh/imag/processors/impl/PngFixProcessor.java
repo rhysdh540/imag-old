@@ -1,10 +1,10 @@
 package dev.rdh.imag.processors.impl;
 
-import dev.rdh.imag.processors.DefaultFileProcessor;
+import dev.rdh.imag.processors.BinaryFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
 
-public class PngFixProcessor extends DefaultFileProcessor {
+public class PngFixProcessor extends BinaryFileProcessor {
 
 	private PngFixProcessor() {
 		super(true, Binary.PNGFIX, "-o --strip=all -q");

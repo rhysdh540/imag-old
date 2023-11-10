@@ -1,13 +1,12 @@
 package dev.rdh.imag.processors.impl.archives;
 
-import dev.rdh.imag.processors.DefaultFileProcessor;
-import dev.rdh.imag.util.Binary;
+import dev.rdh.imag.processors.FileProcessor;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.zip.GZIPInputStream;
 
-public class GZipProcessor extends DefaultFileProcessor {
-	protected GZipProcessor() {
-		super(false, Binary.ZOPFLI, "--gzip --i1000 -c");
-	}
+public class GZipProcessor implements FileProcessor {
 
 	public static GZipProcessor newInstance() {
 		return new GZipProcessor();
@@ -25,17 +24,20 @@ public class GZipProcessor extends DefaultFileProcessor {
 
 	@Override
 	public void process(File file) throws Exception {
-		if(!file.getCanonicalPath().endsWith(extension())) return;
+		if(!file.getName().endsWith(extension())) return;
+		try(GZIPInputStream in = new GZIPInputStream(new FileInputStream(file))) {
+			byte[] data = new byte[(int) file.length()];
+			in.read(data);
 
-		String name = String.valueOf(file.hashCode());
+			byte[] compressed = compress(data);
 
-		addFilesToArgList(file, name);
+			if(compressed.length >= data.length) return;
 
-		ProcessBuilder pb = new ProcessBuilder(command)
-				.directory(file.getParentFile())
-				.redirectError(ProcessBuilder.Redirect.DISCARD)
-				.redirectOutput(file);
-
-		pb.start().waitFor();
+			try(FileOutputStream out = new FileOutputStream(file)) {
+				out.write(compressed);
+			}
+		}
 	}
+
+	public static native byte[] compress(byte[] data);
 }

@@ -1,12 +1,12 @@
 package dev.rdh.imag.processors.impl;
 
-import dev.rdh.imag.processors.DefaultFileProcessor;
+import dev.rdh.imag.processors.BinaryFileProcessor;
 import dev.rdh.imag.util.Binary;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
-public class OptiVorbisProcessor extends DefaultFileProcessor {
+public class OptiVorbisProcessor extends BinaryFileProcessor {
 
 	public OptiVorbisProcessor() {
 		super(false, Binary.OPTIVORBIS, "-q -r ogg2ogg");

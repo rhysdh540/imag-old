@@ -1,9 +1,9 @@
 package dev.rdh.imag.processors.impl.archives;
 
-import dev.rdh.imag.processors.DefaultFileProcessor;
+import dev.rdh.imag.processors.BinaryFileProcessor;
 import java.io.File;
 
-public class ZipProcessor extends DefaultFileProcessor {
+public class ZipProcessor extends BinaryFileProcessor {
 
 	protected ZipProcessor() {
 		super(false, null, "");
