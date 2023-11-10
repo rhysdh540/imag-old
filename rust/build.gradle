@@ -1,0 +1,23 @@
+tasks.register("build") {
+    doLast {
+        exec {
+            commandLine("cargo", "build", "--release", "--color=always", "--package", "imag", "--lib")
+        }
+    }
+}
+
+tasks.register("clean") {
+    doLast {
+        exec {
+            commandLine("cargo", "clean", "--color=always", "--package", "imag", "--lib")
+        }
+    }
+}
+
+tasks.register("buildDebug") {
+    doLast {
+        exec {
+            commandLine("cargo", "build", "--color=always", "--package", "imag", "--lib", "--features", "debug")
+        }
+    }
+}

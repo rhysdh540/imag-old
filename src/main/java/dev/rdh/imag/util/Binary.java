@@ -21,7 +21,7 @@ public enum Binary {
 	private final boolean isOSInstalled;
 
 	private static final OS os;
-	private static final File binariesDir;
+	public static final File DIR;
 
 	Binary() {
 		boolean temp;
@@ -55,7 +55,15 @@ public enum Binary {
 			os = OS.OTHER;
 		}
 
-		binariesDir = new File(Main.MAINDIR, "bin");
+		DIR = new File(Main.MAINDIR, "bin");
+	}
+
+	public static String getLibName() {
+		return switch(os) {
+			case MAC -> "libimag.dylib";
+			case WINDOWS -> "imag.dll";
+			default -> "libimag.so";
+		};
 	}
 
 	public static void load() {
@@ -86,7 +94,7 @@ public enum Binary {
 		String filename = name().toLowerCase();
 		if(os == WINDOWS) filename += ".exe";
 
-		var target = new File(binariesDir, filename);
+		var target = new File(DIR, filename);
 
 		if(target.exists()) return target.toPath();
 
@@ -103,7 +111,7 @@ public enum Binary {
 				return null;
 			}
 
-			binariesDir.mkdirs();
+			DIR.mkdirs();
 			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			target.setExecutable(true);
 			return target.toPath();

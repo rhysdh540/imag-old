@@ -2,11 +2,15 @@ package dev.rdh.imag;
 
 import dev.rdh.imag.processors.FileProcessor;
 import dev.rdh.imag.processors.impl.*;
+import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.EpicLogger;
 import dev.rdh.imag.util.FileUtils;
 import dev.rdh.imag.util.StringUtils.Pair;
 import dev.rdh.imag.util.Versioning;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
@@ -19,6 +23,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import manifold.util.ManExceptionUtil;
 
 import static dev.rdh.imag.util.StringUtils.*;
 
@@ -46,18 +51,28 @@ public class Main {
 	static double maxReduction = 0.0;
 	static long maxReductionSize = 0;
 
+	static {
+		MAINDIR.mkdirs();
+
+		#if !DEV
+		//unpack
+		#endif
+
+		System.loadLibrary("imag");
+	}
+
 	/**
 	 * The list of processors to run.
 	 */
 	public static final List<Supplier<FileProcessor>> processors = new ArrayList<>(List.of(
-			Reencoder::newInstance,
-			OxiPngProcessor::new1Instance,
-			OxiPngProcessor::new2Instance,
-			ZopfliPngProcessor::newInstance,
-			PngOutProcessor::newInstance,
-			PngFixProcessor::newInstance,
-			NbtFileProcessor::newInstance,
-			OptiVorbisProcessor::newInstance
+//			Reencoder::newInstance,
+//			OxiPngProcessor::new1Instance,
+//			OxiPngProcessor::new2Instance,
+			ZopfliPngProcessor::newInstance//,
+//			PngOutProcessor::newInstance,
+//			PngFixProcessor::newInstance,
+//			NbtFileProcessor::newInstance,
+//			OptiVorbisProcessor::newInstance
 	));
 
 	/**
@@ -66,8 +81,9 @@ public class Main {
 	 */
 	#if DEV @SuppressWarnings("all") #endif
 	public static void main(String[] args) {
+		System.out.println(test()); if(true) return;
 		#if DEV
-		String a = "/Users/rhys/Documents/GitHub/vanillaxbr/assets/minecraft/optifine/ctm";
+		String a = "/Users/rhys/coding/mc/Create-Elemancy/src/main/resources/assets/createelemancy/textures/item";
 		args = new String[]{ a };
 		#endif
 		initArgs();
@@ -313,4 +329,6 @@ public class Main {
 		err("Invalid argument: " + arg);
 		return true;
 	}
+
+	static native String test();
 }

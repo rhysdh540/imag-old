@@ -19,6 +19,13 @@ jobs:
           distribution: zulu
           cache: gradle
 
+      - name: setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
       - name: cache gradle
         uses: actions/cache@v2
         with:
