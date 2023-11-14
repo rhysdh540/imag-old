@@ -13,7 +13,7 @@ import static dev.rdh.imag.util.Binary.OS.*;
  * Enum of all the binaries used by this program.
  */
 public enum Binary {
-	OXIPNG, ZOPFLI, ZOPFLIPNG, PNGOUT, OPTIVORBIS, PNGFIX,
+	PNGOUT, PNGFIX, ECT
 
 	;
 
@@ -52,10 +52,11 @@ public enum Binary {
 		} else if(a.contains("mac")) {
 			os = MAC;
 		} else {
-			os = OS.OTHER;
+			os = OTHER;
 		}
 
 		DIR = new File(Main.MAINDIR, "bin");
+		DIR.mkdirs();
 	}
 
 	public static String getLibName() {
@@ -67,8 +68,28 @@ public enum Binary {
 	}
 
 	public static void load() {
-		if(os == OS.OTHER) {
+		if(os == OTHER) {
 			Main.LOGGER.warn("Unsupported OS: " + System.getProperty("os.name"));
+		}
+	}
+
+	public static void unpackNatives() {
+		if(os == OTHER) return;
+
+		String resource = "bin" + File.separator + getLibName();
+
+		File target = new File(DIR, getLibName());
+		if(target.exists()) return;
+
+		try(InputStream stream = FileUtils.localResource(resource)) {
+			if(stream == null) {
+				Main.LOGGER.warn("Could not find native library " + getLibName() + " in jar");
+				return;
+			}
+			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+			target.setExecutable(true);
+		} catch (Exception e) {
+			Main.LOGGER.error("Could not unpack native library " + getLibName(), e);
 		}
 	}
 
@@ -94,7 +115,7 @@ public enum Binary {
 		String filename = name().toLowerCase();
 		if(os == WINDOWS) filename += ".exe";
 
-		var target = new File(DIR, filename);
+		File target = new File(DIR, filename);
 
 		if(target.exists()) return target.toPath();
 
@@ -111,7 +132,6 @@ public enum Binary {
 				return null;
 			}
 
-			DIR.mkdirs();
 			Files.copy(stream, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
 			target.setExecutable(true);
 			return target.toPath();

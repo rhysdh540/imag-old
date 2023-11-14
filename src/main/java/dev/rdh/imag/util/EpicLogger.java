@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.ProcessBuilder.Redirect;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
@@ -27,34 +26,35 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	private boolean debug = false;
 	private boolean trace = false;
 	private boolean info = false;
-	private PrintStream file;
+	private File file;
+	private PrintStream out;
 
 	public EpicLogger(String name) {
 		this.name = name;
 	}
 
-	public EpicLogger file(File logFile) {
-		if(logFile.exists()) {
-			if(logFile.isDirectory()) {
-				logFile.delete();
-			} else {
-				System.out.println("Compressing log file " + logFile.getName() + "... (This may take a while)");
-				compress(logFile);
-			}
+	public CompressOrDelete file(File logFile) {
+		this.file = logFile;
+		if(logFile.exists() && logFile.isDirectory()) {
+			logFile.delete();
 		}
 
-		if(logFile.getParentFile() != null) logFile.getParentFile().mkdirs();
-
-		try {
-			this.file = new PrintStream(new FileOutputStream(logFile), true);
-			logFile.createNewFile();
-		} catch (IOException e) {
-			throw unchecked(e);
+		if(logFile.getParentFile() != null) {
+			logFile.getParentFile().mkdirs();
+			deleteOldFiles(logFile.getParentFile());
 		}
-		return this;
+
+		return new CompressOrDelete(this);
 	}
 
-	public EpicLogger file(String logFile) {
+	public void discard() {
+		if(file != null) {
+			file.delete();
+		}
+		close();
+	}
+
+	public CompressOrDelete file(String logFile) {
 		return file(new File(logFile));
 	}
 
@@ -125,16 +125,16 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	}
 
 	public void log(Level level, Object o, Throwable throwable) {
-		if(level == DEBUG && !debug || level == TRACE && !trace || level == INFO && !info || file == null) return;
+		if(level == DEBUG && !debug || level == TRACE && !trace || level == INFO && !info || out == null) return;
 
 		raw(getPrefix(level) + o, throwable);
 	}
 
 	private void raw(Object o, Throwable throwable) {
 		synchronized(lock) {
-			if(file != null) {
-				file.println(o);
-				if(throwable != null) throwable.printStackTrace(file);
+			if(out != null) {
+				out.println(o);
+				if(throwable != null) throwable.printStackTrace(out);
 			}
 		}
 	}
@@ -196,13 +196,13 @@ public class EpicLogger implements ILogger, AutoCloseable {
 	private String getPrefix(Level level) {
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
 		String time = sdf.format(new Date());
-		return "[${time}] [${Thread.currentThread().getName()}/${level.name()}] (${name}): ";
+		return "[" + time + "] [" + Thread.currentThread().getName() + "/" + level.name() + "] (" + name + "): ";
 	}
 
 	@Override
 	public void close() {
-		if(file != null) {
-			file.close();
+		if(out != null) {
+			out.close();
 		}
 	}
 
@@ -221,8 +221,6 @@ public class EpicLogger implements ILogger, AutoCloseable {
 			throw unchecked(e);
 		}
 		file.delete();
-
-		deleteOldFiles(file.getParentFile());
 	}
 
 	private void deleteOldFiles(File file) {
@@ -236,6 +234,38 @@ public class EpicLogger implements ILogger, AutoCloseable {
 
 		for(File f : files) {
 			f.delete();
+		}
+	}
+
+	private void setupOut() {
+		try {
+			this.out = new PrintStream(new FileOutputStream(file), true);
+			file.createNewFile();
+		} catch (IOException e) {
+			throw unchecked(e);
+		}
+	}
+
+
+	public static final class CompressOrDelete {
+		private final EpicLogger logger;
+
+		private CompressOrDelete(EpicLogger logger) {
+			this.logger = logger;
+		}
+
+		public EpicLogger compress() {
+			logger.compress(logger.file);
+			logger.setupOut();
+			return logger;
+		}
+
+		public EpicLogger delete() {
+			if(logger.file != null && logger.file.exists()) {
+				logger.file.delete();
+			}
+			logger.setupOut();
+			return logger;
 		}
 	}
 

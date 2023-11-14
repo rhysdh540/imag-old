@@ -5,10 +5,13 @@ authors = ["rdh"]
 edition = "2018"
 
 [dependencies]
-jni = "0.21.1"
-oxipng = "9.0.0"
 zopfli = "0.8.0"
-optivorbis = "0.1.4"
+oxipng = "9.0.0"
+jni = "0.21.1"
+
+[build-dependencies]
+bindgen = "0.69.1"
+cc = "1.0.83"
 
 [lib]
 crate_type = ["cdylib"]

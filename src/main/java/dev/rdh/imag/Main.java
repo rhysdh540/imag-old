@@ -2,6 +2,7 @@ package dev.rdh.imag;
 
 import dev.rdh.imag.processors.FileProcessor;
 import dev.rdh.imag.processors.impl.*;
+import dev.rdh.imag.util.Binary;
 import dev.rdh.imag.util.EpicLogger;
 import dev.rdh.imag.util.FileUtils;
 import dev.rdh.imag.util.StringUtils.Pair;
@@ -23,13 +24,23 @@ import java.util.function.Supplier;
 import static dev.rdh.imag.util.StringUtils.*;
 
 public class Main {
+	public static final File WORKDIR = FileUtils.makeWorkDir();
+	public static final File MAINDIR = new File(System.getProperty("user.home"), ".imag");
+	static {
+		MAINDIR.mkdirs();
+		String currentPath = System.getProperty("java.library.path");
+		if(!currentPath.contains(Binary.DIR.getAbsolutePath())) {
+			System.setProperty("java.library.path", currentPath + File.pathSeparator + Binary.DIR.getAbsolutePath());
+		}
+		Binary.load();
+		#if !DEV Binary.unpackNatives(); #endif
+		System.load(new File(Binary.DIR, Binary.getLibName()).getAbsolutePath());
+	}
+
 	public static int passes = 1;
 	public static int threads = 8;
 
 	static final Map<Pair<String, String>, Function<String, Boolean>> args = new HashMap<>();
-
-	public static final File WORKDIR = FileUtils.makeWorkDir();
-	public static final File MAINDIR = new File(System.getProperty("user.home"), ".imag");
 
 	public static final EpicLogger LOGGER = new EpicLogger("imag")
 			#if DEV
@@ -37,6 +48,7 @@ public class Main {
 			#else
 			.file(new File(MAINDIR, "logs/latest.log"))
 			#endif
+			.compress()
 			.disableDebug()
 			.disableTrace()
 			.enableInfo();
@@ -45,27 +57,16 @@ public class Main {
 	static double maxReduction = 0.0;
 	static long maxReductionSize = 0;
 
-	static {
-		MAINDIR.mkdirs();
-
-		#if !DEV
-		//unpack
-		#endif
-
-		System.loadLibrary("imag");
-	}
-
 	/**
 	 * The list of processors to run.
 	 */
 	public static final List<Supplier<FileProcessor>> processors = new ArrayList<>(List.of(
 			Reencoder::newInstance,
+			EctPngProcessor::newInstance,
 			OxiPngProcessor::newInstance,
-			ZopfliPngProcessor::newInstance,
 			PngOutProcessor::newInstance,
 			PngFixProcessor::newInstance,
-			NbtFileProcessor::newInstance,
-			OptiVorbisProcessor::newInstance
+			NbtFileProcessor::newInstance
 	));
 
 	/**
@@ -124,6 +125,11 @@ public class Main {
 			files.sort(Comparator.comparing(File::getName));
 		}
 
+		if(files.isEmpty()) {
+			log("No files found!");
+			return;
+		}
+
 		LOGGER.info("imag v" + Versioning.getLocalVersion());
 		LOGGER.info("Found " + plural(files.size(), "file"));
 		LOGGER.info("Initial size: " + plural(FileUtils.size(files), "byte"));
@@ -158,6 +164,7 @@ public class Main {
 				   "Saved " + plural(totalSavings, "byte") + " (" + format(percentage) + "% of " + preSize + ") - up to " + format(maxReduction) + "%\n" +
 				   "Max reduction: " + plural(maxReductionSize, "byte");
 		log(s);
+		LOGGER.close();
 	}
 
 	/**
@@ -254,7 +261,7 @@ public class Main {
 
 					log(message);
 				}
-			}, "imag worker #${index}")
+			}, "imag worker " + index)
 					.start();
 		}
 

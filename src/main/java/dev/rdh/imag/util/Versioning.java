@@ -47,6 +47,14 @@ public class Versioning {
 
 			File f = new File(Main.MAINDIR, "imag.jar");
 			Files.copy(stream, f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+			File[] binaries = Binary.DIR.listFiles();
+			if(binaries != null) {
+				for(File binary : binaries) {
+					binary.delete();
+				}
+			}
+
 			log("imag v" + online + " downloaded to " + f.getAbsolutePath());
 			log("Restarting...");
 		} catch (IOException e) {

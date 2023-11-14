@@ -4,13 +4,10 @@ import dev.rdh.imag.processors.FileProcessor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 public class GZipProcessor implements FileProcessor {
-
-	public static GZipProcessor newInstance() {
-		return new GZipProcessor();
-	}
 
 	@Override
 	public String name() {
@@ -27,7 +24,8 @@ public class GZipProcessor implements FileProcessor {
 		if(!file.getName().endsWith(extension())) return;
 		try(GZIPInputStream in = new GZIPInputStream(new FileInputStream(file))) {
 			byte[] data = new byte[(int) file.length()];
-			in.read(data);
+			int read = in.read(data);
+			if(read != data.length) throw new IOException("Failed to read all data from file " + file);
 
 			byte[] compressed = compress(data);
 
